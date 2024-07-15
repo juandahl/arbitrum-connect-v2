@@ -8,6 +8,12 @@ export default {
   },
   plugins: [daisyui],
   daisyui: {
-    themes: ["dark"],
+    themes: [
+      {
+        custom: {
+          primary: "#213147",
+        },
+      },
+    ],
   },
 } satisfies Config;
