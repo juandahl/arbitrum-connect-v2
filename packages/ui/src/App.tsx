@@ -4,15 +4,13 @@ import Topbar from "./components/layout/topbar";
 import TermsModal from "./components/layout/TermsModal";
 import "@rainbow-me/rainbowkit/styles.css";
 import {
-  connectorsForWallets,
   lightTheme,
   RainbowKitProvider,
 } from "@rainbow-me/rainbowkit";
-import { createConfig, http, WagmiProvider } from "wagmi";
-import { mainnet, sepolia } from "wagmi/chains";
+import { WagmiProvider } from "wagmi";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import Transaction from "./components/transaction/transaction";
-import { metaMaskWallet } from "@rainbow-me/rainbowkit/wallets";
+import config from "./lib/wagmiConfig";
 
 export default function App() {
   const [showModal, setShowModal] = useState(true);
@@ -35,24 +33,3 @@ export default function App() {
     </WagmiProvider>
   );
 }
-
-const config = createConfig({
-  chains: [mainnet, sepolia],
-  transports: {
-    [mainnet.id]: http(),
-    [sepolia.id]: http(),
-  },
-  connectors: connectorsForWallets(
-    [
-      {
-        groupName: "My Wallets",
-        wallets: [metaMaskWallet],
-      },
-    ],
-    {
-      appName: "Arbitrum PoC",
-      projectId: "ARBITRUM_POC",
-    }
-  ),
-  ssr: false,
-});

@@ -40,7 +40,7 @@ jobs:
       - name: Deploy to s3
         working-directory: ./packages/ui
         run: |
-          aws s3 sync build s3://${{ env.STACK_NAME }}.${{env.UI_DOMAIN}}/
+          aws s3 sync dist s3://${{ env.STACK_NAME }}.${{env.UI_DOMAIN}}/
           # Extract the distribution ID
       - name: Invalidate Cloudfront Distribution
         run: |
