@@ -22,7 +22,7 @@
     "serverless-plugin-common-excludes": "4.0.0",
     "serverless-plugin-include-dependencies": "6.0.0",
     "serverless-s3-sync": "3.3.0",
-    "typescript": "^5.5.3"
+    "typescript": "5.5.3"
   },
   "dependencies": {
     "dotenv": "16.4.5",
