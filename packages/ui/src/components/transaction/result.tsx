@@ -1,4 +1,4 @@
-import classNames from "classnames";
+import cn from "classnames";
 
 export default function TransactionResultCard({
   onSubmit,
@@ -48,7 +48,8 @@ export default function TransactionResultCard({
         </div>
       </div>
       <button
-        className={classNames("btn btn-primary", {
+        type="button"
+        className={cn("btn btn-primary", {
           "btn-disabled": false,
         })}
         style={{
@@ -60,10 +61,10 @@ export default function TransactionResultCard({
         Go to my activity
       </button>
       <button
-        className={classNames("btn btn-secondary", {
+        type="button"
+        className={cn("btn btn-secondary", {
           "btn-disabled": false,
         })}
-      
         style={{
           border: "1px solid black",
           borderRadius: 16,

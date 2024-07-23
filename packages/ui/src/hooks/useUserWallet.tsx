@@ -1,23 +1,22 @@
 import { ethers, Signer } from "ethers";
-import { useEffect, useMemo } from "react";
-import { useWalletClient, useAccount } from "wagmi";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useAccount, useWalletClient } from "wagmi";
 
 export default function useUserWallet() {
   const [isLoading, setIsLoading] = useState(true);
   const [signer, setSigner] = useState<Signer | null>(null);
 
-  const { data, isLoading: isWalletLoading } = useWalletClient();
+  const { data: wallet, isLoading: isWalletLoading } = useWalletClient();
 
   const { address, chain, isConnected, isConnecting, isReconnecting } =
     useAccount();
 
   const provider = useMemo(
     () =>
-      !isConnected || !data
+      !isConnected || !wallet
         ? null
-        : new ethers.providers.Web3Provider(data.transport),
-    [isConnected, data]
+        : new ethers.providers.Web3Provider(wallet.transport),
+    [isConnected, wallet]
   );
 
   useEffect(() => {

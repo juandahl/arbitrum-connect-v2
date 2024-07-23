@@ -1,4 +1,5 @@
-import classNames from "classnames";
+import ArbitrumConnectIcon from "@/assets/arbitrum-connect.svg";
+import cn from "classnames";
 import Modal from "./modal";
 
 export default function TermsModal({
@@ -10,9 +11,9 @@ export default function TermsModal({
 }) {
   return (
     <Modal isOpen={isOpen}>
-      <div>Icon</div>
-      <div>Welcome to Arbitrum Connect</div>
-      <div>
+      <img src={ArbitrumConnectIcon} />
+      <div className="text-xl">Welcome to Arbitrum Connect</div>
+      <div className="text-xl">
         We ensure your transactions are processed even if the Arbitrum Sequencer
         is down or other unexpected issues arise. Learn more.
       </div>
@@ -22,7 +23,8 @@ export default function TermsModal({
           Get started
         </div>
         <button
-          className={classNames("btn btn-primary", {
+          type="button"
+          className={cn("btn btn-primary", {
             "btn-disabled": false,
           })}
           onClick={onSubmit}

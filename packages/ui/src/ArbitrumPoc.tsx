@@ -1,13 +1,16 @@
 import "@rainbow-me/rainbowkit/styles.css";
-import { arbitrum, arbitrumSepolia, mainnet, sepolia } from "wagmi/chains";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { mainnet, sepolia, arbitrum, arbitrumSepolia } from "wagmi/chains";
 
-import { ArbitrumNetwork, getArbitrumNetwork, InboxTools } from "@arbitrum/sdk";
-import { Bridge__factory } from "@arbitrum/sdk/dist/lib/abi/factories/Bridge__factory";
-import { Inbox__factory } from "@arbitrum/sdk/dist/lib/abi/factories/Inbox__factory";
-import { SequencerInbox__factory } from "@arbitrum/sdk/dist/lib/abi/factories/SequencerInbox__factory";
+import { getArbitrumNetwork, InboxTools, ArbitrumNetwork } from "@arbitrum/sdk";
+import useUserWallet from "@/hooks/useUserWallet";
 import { BigNumber } from "@ethersproject/bignumber";
 import { ContractTransaction, Signer, utils } from "ethers";
-import useUserWallet from "./useUserWallet";
+import { Inbox__factory } from "@arbitrum/sdk/dist/lib/abi/factories/Inbox__factory";
+import { SequencerInbox__factory } from "@arbitrum/sdk/dist/lib/abi/factories/SequencerInbox__factory";
+import { Bridge__factory } from "@arbitrum/sdk/dist/lib/abi/factories/Bridge__factory";
+
+const arbitrumChains = [arbitrum, arbitrumSepolia] as const;
 
 const l2Networks = {
   [mainnet.id]: arbitrum.id,
@@ -38,26 +41,26 @@ const submitL2Tx = async (
   );
 };
 
-export default function useArbitrum() {
-  const [l1Signer, chain] = useUserWallet();
+export default function ArbitrumPoc() {
+  const [l1Signer, chain, isLoading, address] = useUserWallet();
 
-  const forceInclude = async () => {
+  const execute = async () => {
     if (!l1Signer || !chain) {
       return;
     }
 
-    const l2Network = getArbitrumNetwork(
+    const l2Network = await getArbitrumNetwork(
       l2Networks[chain.id as keyof typeof l2Networks]
     );
 
     const sequencerInbox = SequencerInbox__factory.connect(
       l2Network.ethBridge.sequencerInbox,
-      l1Signer
+      l1Signer.provider!
     );
 
     const bridge = Bridge__factory.connect(
       l2Network.ethBridge.bridge,
-      l1Signer
+      l1Signer.provider!
     );
 
     const inboxTools = new InboxTools(l1Signer, l2Network);
@@ -66,7 +69,7 @@ export default function useArbitrum() {
     const l2Tx = await submitL2Tx(
       {
         to: await l1Signer.getAddress(),
-        value: utils.parseEther("0.001"),
+        value: utils.parseEther("0.00123"),
         gasLimit: BigNumber.from(100000),
         gasPriceBid: BigNumber.from(21000000000),
         nonce: 0,
@@ -88,29 +91,31 @@ export default function useArbitrum() {
       `Messages before: ${messagesReadBegin.toString()} / after: ${messagesReadEnd.toString()}`
     );
   };
-  return [forceInclude] as const;
 
-  //   return (
-  //     <>
-  //       {isLoading && <div>Loading...</div>}
-  //       {address && chain && (
-  //         <div>
-  //           <div>Wallet: {address}</div>
-  //           <div>Chain: {chain.name}</div>
-  //         </div>
-  //       )}
+  return (
+    <>
+      <ConnectButton />
 
-  //       <br />
+      {isLoading && <div>Loading...</div>}
 
-  //       {arbitrumChains.map((chain, index) => (
-  //         <div key={`chain-${index}`}>
-  //           <div>
-  //             Chain: {chain.name} ({chain.id})
-  //           </div>
-  //         </div>
-  //       ))}
+      {address && chain && (
+        <div>
+          <div>Wallet: {address}</div>
+          <div>Chain: {chain.name}</div>
+        </div>
+      )}
 
-  //       <button type="button" onClick={execute}>Execute!</button>
-  //     </>
-  //   );
+      <br />
+
+      {arbitrumChains.map((chain, index) => (
+        <div key={`chain-${index}`}>
+          <div>
+            Chain: {chain.name} ({chain.id})
+          </div>
+        </div>
+      ))}
+
+      <button type="button" onClick={execute}>Execute!</button>
+    </>
+  );
 }

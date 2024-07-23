@@ -1,8 +1,7 @@
 import { connectorsForWallets } from "@rainbow-me/rainbowkit";
 import { metaMaskWallet } from "@rainbow-me/rainbowkit/wallets";
-import { mainnet, sepolia } from "wagmi/chains";
 import { createConfig, http } from "wagmi";
-
+import { mainnet, sepolia } from "wagmi/chains";
 
 const config = createConfig({
   chains: [mainnet, sepolia],

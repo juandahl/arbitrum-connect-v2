@@ -1,5 +1,4 @@
-import classNames from "classnames";
-
+import cn from "classnames";
 export default function TransactionReviewCard({
   onSubmit,
 }: {
@@ -131,7 +130,8 @@ export default function TransactionReviewCard({
         </div>
       </div>
       <button
-        className={classNames("btn btn-primary", {
+        type="button"
+        className={cn("btn btn-primary", {
           "btn-disabled": false,
         })}
         style={{

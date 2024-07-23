@@ -15,7 +15,7 @@ export default function Modal({
   return (
     <>
       <dialog id="terms-modal" className="modal">
-        <div className="modal-box">{children}</div>
+        <div className="modal-box flex flex-col items-center">{children}</div>
       </dialog>
     </>
   );

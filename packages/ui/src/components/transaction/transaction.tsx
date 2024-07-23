@@ -1,7 +1,7 @@
 import { useState } from "react";
 import TransactionAmountCard from "./amount";
-import TransactionReviewCard from "./review";
 import TransactionResultCard from "./result";
+import TransactionReviewCard from "./review";
 
 enum STEPS {
   amount,
