@@ -2,7 +2,7 @@ import CheckGreenIcon from "@/assets/check-green.svg";
 import LocalStorageService from "@/lib/localStorageService";
 import cn from "classnames";
 import { ContractTransaction } from "ethers";
-import { useTransactionReceipt } from "wagmi";
+import { useBlock, useTransactionReceipt } from "wagmi";
 
 export default function TransactionResultCard({
   amount,
@@ -21,12 +21,14 @@ export default function TransactionResultCard({
   };
 
   const lastTxHash = new LocalStorageService().getItem("lastTxHash");
-
   const txRecipt = useTransactionReceipt({
     hash: tx ? tx.hash : lastTxHash,
   });
-  console.log("txRecipt.dataUpdatedAt", new Date(txRecipt.dataUpdatedAt));
-  console.log("txRecipt.errorUpdatedAt", new Date(txRecipt.errorUpdatedAt));
+  const block = useBlock({ blockNumber: txRecipt.data?.blockNumber });
+  const blockTimestamp = Number(block.data?.timestamp) * 1000;
+  const elapsedHours = Math.floor(
+    (new Date().valueOf() - blockTimestamp) / 1000 / 60 / 60
+  );
 
   return (
     <div
@@ -45,6 +47,9 @@ export default function TransactionResultCard({
           been successfully initiated
         </div>
         <div>Your transactionHash is: {tx ? tx.hash : lastTxHash}</div>
+        {!Number.isNaN(elapsedHours) && (
+          <div>Elapsed Time: {elapsedHours}/24h</div>
+        )}
       </div>
       {/* )} */}
       <div
