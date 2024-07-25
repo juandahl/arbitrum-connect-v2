@@ -1,18 +1,15 @@
 {
-  "name": "react-monorepo-template",
+  "name": "arbitrum-transaction-enforcer",
   "version": "0.0.0",
   "type": "module",
-  "workspaces": [
-    "packages/*"
-  ],
-  "scripts": {
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "dev": "concurrently --kill-others \"npm run dev -w packages/api\" \"npm run dev -w packages/ui\"",
-    "build": "npm run build -w packages/ui && npm run build -w packages/api"
-  },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "scripts": {
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "dev": "concurrently --kill-others \"pnpm --filter api run dev\" \"pnpm --filter ui run dev\"",
+    "build": "pnpm -r build"
+  },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "7.6.0",
     "@typescript-eslint/parser": "7.6.0",
@@ -24,7 +21,8 @@
     "serverless": "3.38.0",
     "serverless-plugin-common-excludes": "4.0.0",
     "serverless-plugin-include-dependencies": "6.0.0",
-    "serverless-s3-sync": "3.3.0"
+    "serverless-s3-sync": "3.3.0",
+    "typescript": "5.5.3"
   },
   "dependencies": {
     "dotenv": "16.4.5",
