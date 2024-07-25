@@ -1,42 +1,72 @@
 import ArbitrumIcon from "@/assets/arbitrum-icon.svg";
 import ArrowRightIcon from "@/assets/arrow-right.svg";
-import ArrowSwapIcon from "@/assets/arrow-swap.svg";
 import ChevronDownIcon from "@/assets/chevron-down.svg";
-import ClockIcon from "@/assets/clock.svg";
+import ChevronLeftIcon from "@/assets/chevron-left.svg";
 import EthereumIcon from "@/assets/ethereum-icon.svg";
-import NoteIcon from "@/assets/note.svg";
 import WalletIcon from "@/assets/wallet.svg";
 import CustomConnectButton from "@/components/styled/connectButton/customConnectButton";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { useRef } from "react";
-import { formatUnits } from "viem";
-import { useAccount, useBalance } from "wagmi";
+import useArbitrumBalance from "@/hooks/useArbitrumBalance";
+import useChain from "@/hooks/useChain";
+import { useChainModal, useConnectModal } from "@rainbow-me/rainbowkit";
+import cn from "classnames";
+import { useForm } from "react-hook-form";
+import { useAccount } from "wagmi";
+import { z } from "zod";
+
+const formSchema = z.object({
+  amount: z.number().refine((value) => value > 0, {
+    message: "Must be a greater than 0",
+  }),
+});
+
+type FormType = z.infer<typeof formSchema>;
 
 export default function TransactionAmountCard({
   onSubmit,
+  onBack,
+  amount,
 }: {
+  onBack(): void;
   onSubmit(amount: number): void;
+  amount?: number;
 }) {
-  const amount = 5;
   const { openConnectModal } = useConnectModal();
-  const usdAmountRef = useRef<HTMLInputElement>(null);
+  const { openChainModal } = useChainModal();
+  // const usdAmountRef = useRef<HTMLInputElement>(null);
   const { address } = useAccount();
-  const { data: balance } = useBalance({ address });
-  const onFormSubmit = () => {
-    if (!address && openConnectModal) {
-      openConnectModal();
+  const { isChainValid } = useChain();
+  const arbBalance = useArbitrumBalance();
+  const {
+    handleSubmit,
+    watch,
+    register,
+    formState: { isValid },
+    setValue,
+  } = useForm<FormType>({ mode: "onChange" });
+
+  const currentAmount = watch("amount", amount ? amount : undefined);
+
+  const onFormSubmit = (values: FormType) => {
+    if (
+      !isValid ||
+      !address ||
+      !isChainValid ||
+      Number(values.amount) > Number(arbBalance)
+    )
       return;
-    }
-    if (!amount) return;
-    onSubmit(amount);
-  };
-  const onAmountChange: React.ChangeEventHandler<HTMLInputElement> = (e) => {
-    if (!usdAmountRef?.current || isNaN(Number(e.target.value))) return;
-    usdAmountRef.current.innerText = `~ ${Number(e.target.value) * 3} USD`;
+    onSubmit(Number(values.amount));
   };
 
   return (
-    <form onSubmit={onFormSubmit} noValidate>
+    <form onSubmit={handleSubmit(onFormSubmit)} noValidate>
+      <button
+        type="button"
+        className="flex items-center flex-row gap-3 mb-4"
+        onClick={onBack}
+      >
+        <img src={ChevronLeftIcon} />
+        <div className="font-semibold text-xl">Back</div>
+      </button>
       <div className="flex flex-col gap-6 w-150">
         <div className="flex text-left justify-between items-center bg-neutral-50 border border-neutral-200 rounded-2xl p-5">
           <div className="flex flex-row gap-3 items-start">
@@ -55,48 +85,61 @@ export default function TransactionAmountCard({
             </div>
           </div>
         </div>
-        <div
-          className="flex flex-col grow justify-between items-center bg-neutral-50 border border-neutral-200 rounded-2xl p-5 pt-0"
-          style={{
-            height: 336,
-          }}
-        >
-          <div className="flex flex-col grow items-center justify-center text-neutral-400">
+        <div className="flex flex-col grow justify-between items-center bg-neutral-50 border border-neutral-200 rounded-2xl p-5 pt-0 h-[21rem]">
+          <div className="flex flex-col grow items-center justify-center">
             <input
-              name="amount"
-              type="number"
+              {...register("amount", {
+                value: amount,
+                required: "This field is required",
+                min: {
+                  value: 0.000000001,
+                  message: "Negative numbers are not allowed",
+                },
+              })}
               placeholder="0"
-              className="bg-neutral-50 text-center text-7xl w-full outline-none remove-arrow"
-              onChange={onAmountChange}
+              type="number"
+              className="bg-neutral-50 text-center text-7xl w-full outline-none remove-arrow font-semibold"
+              onKeyDown={(e) =>
+                ["-", "ArrowUp", "ArrowDown"].includes(e.key) &&
+                e.preventDefault()
+              }
+              onBlur={(e) => {
+                const newNumber = Number(e.target.value);
+                if (newNumber > 0)
+                  setValue("amount", newNumber, {
+                    shouldValidate: true,
+                  });
+                else {
+                  e.target.value = "";
+                  e.preventDefault();
+                }
+              }}
             />
-            <div className="flex gap-1 ml-4">
-              <div className="text-base" ref={usdAmountRef}>
-                ~ 0 USD
+            {/* <div className="flex gap-1 ml-4 text-neutral-400">
+              <div className="text-base">
+                ~ {toUSD(currentAmount)} USD
               </div>
               <img src={ArrowSwapIcon} />
-            </div>
+            </div> */}
           </div>
           <hr className="w-full pb-6" />
           <div className="flex justify-between items-center w-full">
             <div className="flex items-center gap-4">
-              <img src={EthereumIcon} />
+              <img src={ArbitrumIcon} />
               <div className="flex flex-col text-left">
-                <div className="font-bold text-xl">ETH</div>
-                <div className="text-neutral-500">
-                  Balance{" "}
-                  {balance
-                    ? formatUnits(
-                        BigInt(balance.value),
-                        balance?.decimals
-                      ).toString()
-                    : "0"}
-                </div>
+                <div className="font-bold text-xl">ARB</div>
+                <div className="text-neutral-500">Balance {arbBalance}</div>
               </div>
             </div>
             <div className="flex flex-row items-center gap-5">
               <button
                 type="button"
                 className="btn btn-neutral rounded-3xl px-5"
+                onClick={() =>
+                  setValue("amount", Number(arbBalance), {
+                    shouldValidate: true,
+                  })
+                }
               >
                 Max
               </button>
@@ -110,7 +153,6 @@ export default function TransactionAmountCard({
               <img src={WalletIcon} />
               <div>Address</div>
             </div>
-            {/* <button type="button" onClick={openConnectModal}>{"..."}</button> */}
             <CustomConnectButton
               variant="outlined"
               size="small"
@@ -120,7 +162,7 @@ export default function TransactionAmountCard({
               label="..."
             />
           </div>
-          <div className="w-full flex justify-between items-center h-9">
+          {/* <div className="w-full flex justify-between items-center h-9">
             <div className="flex gap-3">
               <img src={ClockIcon} />
               <div>Transfer Time</div>
@@ -136,16 +178,35 @@ export default function TransactionAmountCard({
               <div className="text-neutral-400">~ $85.57</div>
               <div>0.012 ETH</div>
             </div>
-          </div>
+          </div> */}
         </div>
         <button
+          onClick={(e) => {
+            if (!address && openConnectModal) {
+              openConnectModal();
+              e.preventDefault();
+            } else if (!isChainValid && openChainModal) {
+              openChainModal();
+              e.preventDefault();
+            } else if (currentAmount > Number(arbBalance)) {
+              setValue("amount", Number(arbBalance), { shouldValidate: true });
+              e.preventDefault();
+            }
+          }}
           type="submit"
-          className="btn btn-primary rounded-3xl border-current"
+          className={cn(
+            "btn btn-primary rounded-3xl disabled:text-neutral-200"
+          )}
+          disabled={address && isChainValid && !isValid}
         >
           {address
-            ? amount
-              ? "Continue"
-              : "Enter an amount"
+            ? isChainValid
+              ? !currentAmount
+                ? "Enter an amount"
+                : currentAmount > Number(arbBalance)
+                  ? "All i have"
+                  : "Continue"
+              : "Wrong network"
             : "Connet your wallet to withdraw"}
         </button>
       </div>

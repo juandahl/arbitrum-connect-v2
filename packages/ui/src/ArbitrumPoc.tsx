@@ -1,14 +1,14 @@
-import "@rainbow-me/rainbowkit/styles.css";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { mainnet, sepolia, arbitrum, arbitrumSepolia } from "wagmi/chains";
+import "@rainbow-me/rainbowkit/styles.css";
+import { arbitrum, arbitrumSepolia, mainnet, sepolia } from "wagmi/chains";
 
-import { getArbitrumNetwork, InboxTools, ArbitrumNetwork } from "@arbitrum/sdk";
 import useUserWallet from "@/hooks/useUserWallet";
-import { BigNumber } from "@ethersproject/bignumber";
-import { ContractTransaction, Signer, utils } from "ethers";
+import { ArbitrumNetwork, getArbitrumNetwork, InboxTools } from "@arbitrum/sdk";
+import { Bridge__factory } from "@arbitrum/sdk/dist/lib/abi/factories/Bridge__factory";
 import { Inbox__factory } from "@arbitrum/sdk/dist/lib/abi/factories/Inbox__factory";
 import { SequencerInbox__factory } from "@arbitrum/sdk/dist/lib/abi/factories/SequencerInbox__factory";
-import { Bridge__factory } from "@arbitrum/sdk/dist/lib/abi/factories/Bridge__factory";
+import { BigNumber } from "@ethersproject/bignumber";
+import { ContractTransaction, Signer, utils } from "ethers";
 
 const arbitrumChains = [arbitrum, arbitrumSepolia] as const;
 
@@ -71,18 +71,21 @@ export default function ArbitrumPoc() {
         to: await l1Signer.getAddress(),
         value: utils.parseEther("0.00123"),
         gasLimit: BigNumber.from(100000),
-        gasPriceBid: BigNumber.from(21000000000),
+        gasPriceBid: BigNumber.from(0),
         nonce: 0,
       },
       l2Network,
       l1Signer
     );
-    await l2Tx.wait();
+    // const result = await l2Tx.wait();
+    console.log("submit l2tx: ", l2Tx);
 
     const forceInclusionTx = await inboxTools.forceInclude();
+    console.log("forceInclusionTx: ", forceInclusionTx);
 
     if (forceInclusionTx) {
-      await forceInclusionTx.wait();
+      const result2 = await forceInclusionTx.wait();
+      console.log("forceInclusionTx await: ", result2);
     }
 
     const messagesReadEnd = await sequencerInbox.totalDelayedMessagesRead();
@@ -115,7 +118,9 @@ export default function ArbitrumPoc() {
         </div>
       ))}
 
-      <button type="button" onClick={execute}>Execute!</button>
+      <button type="button" onClick={execute}>
+        Execute!
+      </button>
     </>
   );
 }
