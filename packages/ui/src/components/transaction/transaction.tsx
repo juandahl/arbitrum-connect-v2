@@ -41,6 +41,9 @@ export default function Transaction() {
       {currentStep === STEPS.amount && (
         <TransactionAmountCard
           amount={amount}
+          onBack={() => {
+            setCurrentStep(STEPS.menu);
+          }}
           onSubmit={(amount) => {
             setAmount(amount);
             setCurrentStep(STEPS.review);

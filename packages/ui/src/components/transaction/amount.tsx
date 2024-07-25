@@ -1,6 +1,7 @@
 import ArbitrumIcon from "@/assets/arbitrum-icon.svg";
 import ArrowRightIcon from "@/assets/arrow-right.svg";
 import ChevronDownIcon from "@/assets/chevron-down.svg";
+import ChevronLeftIcon from "@/assets/chevron-left.svg";
 import EthereumIcon from "@/assets/ethereum-icon.svg";
 import WalletIcon from "@/assets/wallet.svg";
 import CustomConnectButton from "@/components/styled/connectButton/customConnectButton";
@@ -22,8 +23,10 @@ type FormType = z.infer<typeof formSchema>;
 
 export default function TransactionAmountCard({
   onSubmit,
+  onBack,
   amount,
 }: {
+  onBack(): void;
   onSubmit(amount: number): void;
   amount?: number;
 }) {
@@ -44,13 +47,6 @@ export default function TransactionAmountCard({
   const currentAmount = watch("amount", amount ? amount : undefined);
 
   const onFormSubmit = (values: FormType) => {
-    // if (!address && openConnectModal) {
-    //   openConnectModal();
-    //   return;
-    // } else if (!isChainValid && openChainModal) {
-    //   openChainModal();
-    //   return;
-    // }
     if (
       !isValid ||
       !address ||
@@ -63,6 +59,14 @@ export default function TransactionAmountCard({
 
   return (
     <form onSubmit={handleSubmit(onFormSubmit)} noValidate>
+      <button
+        type="button"
+        className="flex items-center flex-row gap-3 mb-4"
+        onClick={onBack}
+      >
+        <img src={ChevronLeftIcon} />
+        <div className="font-semibold text-xl">Back</div>
+      </button>
       <div className="flex flex-col gap-6 w-150">
         <div className="flex text-left justify-between items-center bg-neutral-50 border border-neutral-200 rounded-2xl p-5">
           <div className="flex flex-row gap-3 items-start">

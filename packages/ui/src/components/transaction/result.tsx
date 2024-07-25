@@ -1,4 +1,8 @@
+import BellIcon from "@/assets/bell.svg";
 import CheckGreenIcon from "@/assets/check-green.svg";
+import StepOneIcon from "@/assets/step-one.svg";
+import StepThreeIcon from "@/assets/step-three.svg";
+import StepTwoIcon from "@/assets/step-two.svg";
 import LocalStorageService from "@/lib/localStorageService";
 import cn from "classnames";
 import { ContractTransaction } from "ethers";
@@ -39,36 +43,44 @@ export default function TransactionResultCard({
       className="flex flex-col"
     >
       {/* {tx && amount && ( */}
-      <div>
+      <div className="flex flex-col items-center">
         <img src={CheckGreenIcon} />
-        <div>Hey! Great Job!</div>
-        <div>
-          Your withdrawal request for {amount} ARB from Arbitrum to Ethereum has
-          been successfully initiated
+        <div className="text-4xl font-semibold mb-6">Hey! Great Job!</div>
+        <div className="text-xl">
+          Your withdrawal request for <b className="font-semibold">{amount}</b>{" "}
+          ARB from <b className="font-semibold">Arbitrum</b> to{" "}
+          <b className="font-semibold">Ethereum</b> has been successfully
+          initiated
         </div>
-        <div>Your transactionHash is: {tx ? tx.hash : lastTxHash}</div>
+        <div className="text-xl">
+          Your transactionHash is: <b>{tx ? tx.hash : lastTxHash}</b>
+        </div>
         {!Number.isNaN(elapsedHours) && (
-          <div>Elapsed Time: {elapsedHours}/24h</div>
+          <div className="text-xl">
+            Elapsed Time: <b>{elapsedHours}/24h</b>
+          </div>
         )}
       </div>
       {/* )} */}
-      <div
-        className="flex flex-col text-start bg-gray-100"
-        style={{
-          overflow: "hidden",
-          justifyContent: "space-between",
-          border: "1px solid #E5E7EB",
-          borderRadius: 16,
-        }}
-      >
-        <div className="p-1">
-          <div className="">Initiate Withdraw</div>
-          <div className="">Waiting Period</div>
-          <div className="">Claim funds on Ethereum</div>
+      <div className="h-[17.625rem] flex flex-col text-start justify-between bg-gray-100 border border-neutral-200 rounded-2xl overflow-hidden">
+        <div className="flex flex-col grow justify-between p-6 mb-3">
+          <div className="flex gap-3">
+            <img src={StepOneIcon} />
+            <div className="text-lg">Initiate Withdraw</div>
+          </div>
+          <div className="flex gap-3">
+            <img src={StepTwoIcon} />
+            <div className="text-lg">Waiting Period</div>
+          </div>
+          <div className="flex gap-3">
+            <img src={StepThreeIcon} />
+            <div className="text-lg">Claim funds on Ethereum</div>
+          </div>
         </div>
-        <div className="bg-gray-200">
-          <div className="p-1">
-            Have questions about this process? <a>Learn More</a>
+        <div className="bg-gray-200 px-4 py-3">
+          <div className="text-sm">
+            Have questions about this process?{" "}
+            <a className="link">Learn More</a>
           </div>
         </div>
       </div>
@@ -83,6 +95,7 @@ export default function TransactionResultCard({
         }}
         onClick={onActivityClick}
       >
+        <img src={BellIcon} />
         Go to my activity
       </button>
       <button
