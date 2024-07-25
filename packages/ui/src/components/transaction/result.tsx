@@ -1,8 +1,16 @@
+import CheckGreenIcon from "@/assets/check-green.svg";
+import LocalStorageService from "@/lib/localStorageService";
 import cn from "classnames";
+import { ContractTransaction } from "ethers";
+import { useTransactionReceipt } from "wagmi";
 
 export default function TransactionResultCard({
+  amount,
+  tx,
   onSubmit,
 }: {
+  amount?: number;
+  tx?: ContractTransaction;
   onSubmit(): void;
 }) {
   const onReturnClick = () => {
@@ -11,6 +19,13 @@ export default function TransactionResultCard({
   const onActivityClick = () => {
     onSubmit();
   };
+
+  const lastTxHash = new LocalStorageService().getItem("lastTxHash");
+
+  const txRecipt = useTransactionReceipt({ hash: lastTxHash });
+  console.log("txRecipt.dataUpdatedAt", new Date(txRecipt.dataUpdatedAt));
+  console.log("txRecipt.errorUpdatedAt", new Date(txRecipt.errorUpdatedAt));
+
   return (
     <div
       style={{
@@ -19,14 +34,17 @@ export default function TransactionResultCard({
       }}
       className="flex flex-col"
     >
+      {/* {tx && amount && ( */}
       <div>
-        <div>icon OK</div>
+        <img src={CheckGreenIcon} />
         <div>Hey! Great Job!</div>
         <div>
-          Your withdrawal request for 0.0005 ETH from Arbitrum to Ethereum has
+          Your withdrawal request for {amount} ARB from Arbitrum to Ethereum has
           been successfully initiated
         </div>
+        <div>Your transactionHash is: {lastTxHash}</div>
       </div>
+      {/* )} */}
       <div
         className="flex flex-col text-start bg-gray-100"
         style={{

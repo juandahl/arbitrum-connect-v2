@@ -3,8 +3,9 @@ import { metaMaskWallet } from "@rainbow-me/rainbowkit/wallets";
 import { createConfig, http } from "wagmi";
 import { mainnet, sepolia } from "wagmi/chains";
 
+const chains = [mainnet, sepolia] as const;
 const config = createConfig({
-  chains: [mainnet, sepolia],
+  chains,
   transports: {
     [mainnet.id]: http(),
     [sepolia.id]: http(),
@@ -24,4 +25,8 @@ const config = createConfig({
   ssr: false,
 });
 
+const supportedchains = chains.map((x) => Number(x.id));
+export function isChainSupported(chainId: number) {
+  return supportedchains.includes(chainId);
+}
 export default config;

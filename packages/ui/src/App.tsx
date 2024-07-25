@@ -3,15 +3,12 @@ import "@rainbow-me/rainbowkit/styles.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider } from "wagmi";
 import "./App.css";
-import Topbar from "./components/layout/topbar";
-import config from "./lib/wagmiConfig";
 // import ArbitrumPoc from "./ArbitrumPoc";
-import { useState } from "react";
-import TermsModal from "./components/layout/TermsModal";
+import Topbar from "./components/layout/topbar";
 import Transaction from "./components/transaction/transaction";
+import config from "./lib/wagmiConfig";
 
 export default function App() {
-  const [showModal, setShowModal] = useState(true);
   const queryClient = new QueryClient();
 
   return (
@@ -26,10 +23,6 @@ export default function App() {
             <Topbar />
             {/* <ArbitrumPoc /> */}
             <Transaction />
-            <TermsModal
-              isOpen={showModal}
-              onSubmit={() => setShowModal(false)}
-            />
           </div>
         </RainbowKitProvider>
       </QueryClientProvider>
