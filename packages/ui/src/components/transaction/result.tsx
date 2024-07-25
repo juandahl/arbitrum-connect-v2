@@ -42,7 +42,7 @@ export default function TransactionResultCard({
           Your withdrawal request for {amount} ARB from Arbitrum to Ethereum has
           been successfully initiated
         </div>
-        <div>Your transactionHash is: {lastTxHash}</div>
+        <div>Your transactionHash is: {tx ? tx.hash : lastTxHash}</div>
       </div>
       {/* )} */}
       <div
