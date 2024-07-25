@@ -22,7 +22,9 @@ export default function TransactionResultCard({
 
   const lastTxHash = new LocalStorageService().getItem("lastTxHash");
 
-  const txRecipt = useTransactionReceipt({ hash: lastTxHash });
+  const txRecipt = useTransactionReceipt({
+    hash: tx ? tx.hash : lastTxHash,
+  });
   console.log("txRecipt.dataUpdatedAt", new Date(txRecipt.dataUpdatedAt));
   console.log("txRecipt.errorUpdatedAt", new Date(txRecipt.errorUpdatedAt));
 
