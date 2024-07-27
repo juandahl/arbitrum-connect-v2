@@ -1,6 +1,6 @@
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import "@rainbow-me/rainbowkit/styles.css";
-import { arbitrum, arbitrumSepolia, mainnet, sepolia } from "wagmi/chains";
+import { arbitrumSepolia, sepolia } from "wagmi/chains";
 
 import useUserWallet from "@/hooks/useUserWallet";
 import { ArbitrumNetwork, getArbitrumNetwork, InboxTools } from "@arbitrum/sdk";
@@ -10,10 +10,9 @@ import { SequencerInbox__factory } from "@arbitrum/sdk/dist/lib/abi/factories/Se
 import { BigNumber } from "@ethersproject/bignumber";
 import { ContractTransaction, Signer, utils } from "ethers";
 
-const arbitrumChains = [arbitrum, arbitrumSepolia] as const;
+const arbitrumChains = [arbitrumSepolia] as const;
 
 const l2Networks = {
-  [mainnet.id]: arbitrum.id,
   [sepolia.id]: arbitrumSepolia.id,
 } as const;
 
@@ -66,19 +65,17 @@ export default function ArbitrumPoc() {
     const inboxTools = new InboxTools(l1Signer, l2Network);
 
     const messagesReadBegin = await bridge.sequencerMessageCount();
-    const l2Tx = await submitL2Tx(
-      {
-        to: await l1Signer.getAddress(),
-        value: utils.parseEther("0.00123"),
-        gasLimit: BigNumber.from(100000),
-        gasPriceBid: BigNumber.from(0),
-        nonce: 0,
-      },
-      l2Network,
-      l1Signer
-    );
-    // const result = await l2Tx.wait();
-    console.log("submit l2tx: ", l2Tx);
+    const coolTx = {
+      to: await l1Signer.getAddress(),
+      value: utils.parseEther("0.0003"),
+      gasLimit: BigNumber.from(100000),
+      gasPriceBid: BigNumber.from(21000000000),
+      nonce: 0,
+    };
+    const l2Tx = await submitL2Tx(coolTx, l2Network, l1Signer);
+    const reciept = await l2Tx.wait();
+    console.log("l2tx: ", l2Tx);
+    console.log("l2tx reciept: ", reciept);
 
     const forceInclusionTx = await inboxTools.forceInclude();
     console.log("forceInclusionTx: ", forceInclusionTx);
