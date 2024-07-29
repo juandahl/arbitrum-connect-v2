@@ -79,5 +79,6 @@ export default function useArbitrum() {
       tx.data || "0x"
     );
   };
+  
   return { forceInclude, submitL2Tx } as const;
 }

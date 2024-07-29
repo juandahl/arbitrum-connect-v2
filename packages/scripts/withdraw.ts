@@ -113,13 +113,15 @@ async function getClaimStatus(txnHash: string, l1Wallet: Wallet, l2Provider: eth
     }
 }
 
-async function claimFunds(txnHash: string, l2Provider: ethers.providers.JsonRpcProvider) {
-    if (!txnHash)
+async function claimFunds(txnHash: string, l1Wallet: Wallet, l2Provider: ethers.providers.JsonRpcProvider) {
+    if (!txnHash) {
         throw new Error(
             "Provide a transaction hash of an L2 transaction that sends an L2 to L1 message"
         );
-    if (!txnHash.startsWith("0x") || txnHash.trim().length != 66)
+    }
+    if (!txnHash.startsWith("0x") || txnHash.trim().length != 66) {
         throw new Error(`Hmm, ${txnHash} doesn't look like a txn hash...`);
+    }
 
     // First, let's find the Arbitrum txn from the txn hash provided
     const receipt = await l2Provider.getTransactionReceipt(txnHash);
@@ -146,10 +148,6 @@ async function claimFunds(txnHash: string, l2Provider: ethers.providers.JsonRpcP
 }
 
 
-// initiateWithdraw(l1Wallet, l2Wallet, 1000000000000000000)
-// checkIfClaimable() -> claim()
-//  else -> checkIfForceIncludePossible() -> forceInclude()
-
 if (!process.env.DEVNET_PRIVKEY) {
     throw new Error('DEVNET_PRIVKEY env variable is required')
 } else if (!process.env.L2RPC) {
@@ -166,28 +164,50 @@ const l2Provider = new providers.JsonRpcProvider(process.env.L2RPC)
 const l1Wallet = new Wallet(walletPrivateKey, l1Provider)
 const l2Wallet = new Wallet(walletPrivateKey, l2Provider)
 
-async function claim(txHash: string) {
-    const claimStatus = await getClaimStatus(txHash, l1Wallet, l2Provider)
-    console.log("claimStatus", claimStatus)
-    if (claimStatus === ClaimStatus.CLAIMABLE) {
-        console.log("claimable")
-        // await claimFunds(txHash)
-    } else if (claimStatus === ClaimStatus.PENDING) {
-        console.log("pending")
-        // const forceIncludePossible = await isForceIncludePossible(l1Wallet, l2Wallet)
-        // if (forceIncludePossible) {
-        //     console.log('Force include possible. TODO:')
-        // }
-    }
-}
 
-// initiateWithdraw(l1Wallet, l2Wallet, 1).then((r) => {
-//     console.log("initiateWithdraw", r)
-// })
+// App logic ========================================================================
+// initiateWithdraw(l1Wallet, l2Wallet, 1000000000000000000)
+// checkIfClaimable() -> claim()
+//  else -> checkIfForceIncludePossible() -> forceInclude()
 
 
-claim("0xba46de8a236f34ee520aa920384d4222046858dc62bbc7e99f75854e89454770")
+// Bridge internal tests ============================================================
 
-// isForceIncludePossible(l1Wallet, l2Wallet).then(r => {
-//     console.log(r)
-// })
+// initiateWithdraw(l1Wallet, l2Wallet, 1).then(console.log)
+
+// const l2Hash = "0xba46de8a236f34ee520aa920384d4222046858dc62bbc7e99f75854e89454770"
+// getClaimStatus(l2Hash, l1Wallet, l2Provider).then(console.log)
+
+// isForceIncludePossible(l1Wallet, l2Wallet).then(console.log)
+
+// claimFunds(l2Hash, l1Wallet, l2Provider).then(console.log)
+
+// Bridge internal tests ============================================================
+
+// async function readCount() {
+//     const contract = new ethers.Contract("0x362698Add3e652B9422Ac669d4e228608C6cFecd", ["function count() view returns (uint256)"], l2Provider);
+
+//     console.log(await contract.count())
+// }
+
+
+// async function incrementCount() {
+//     const contract = new ethers.Contract("0x362698Add3e652B9422Ac669d4e228608C6cFecd", ["function increment() public"], l2Wallet);
+
+//     console.log(await contract.increment())
+// }
+
+// async function incrementCountWithDelayed() {
+//     const contract = new ethers.utils.Interface(["function increment() public"]);
+//     const tx = {
+//         to: "0x362698Add3e652B9422Ac669d4e228608C6cFecd",
+//         data: await contract.encodeFunctionData("increment"),
+//     }
+
+//     return await sendWithDelayedInbox(tx, l1Wallet, l2Wallet)
+// }
+
+
+// // incrementCount()
+// // incrementCountWithDelayed().then(console.log)
+// readCount()
