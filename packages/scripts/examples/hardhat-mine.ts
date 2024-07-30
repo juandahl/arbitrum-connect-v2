@@ -1,5 +1,5 @@
-import axios from 'axios'
 import "dotenv/config"
+import axios from 'axios'
 
 const mineBlockAt = async (rpc: string, timestamp: number) => {
   if (!rpc.includes("localhost") && !rpc.includes("127.0.0.1")) {
@@ -21,7 +21,6 @@ const mineBlockAt = async (rpc: string, timestamp: number) => {
     data: data
   })
 }
-
 
 const mineBlocks = async (
   rpc: string,
