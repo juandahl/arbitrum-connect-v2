@@ -43,7 +43,7 @@ export default function TransactionResultCard({
         <div className="text-4xl font-semibold mb-6">Hey! Great Job!</div>
         <div className="text-xl">
           Your withdrawal request for <b className="font-semibold">{amount}</b>{" "}
-          ARB from <b className="font-semibold">Arbitrum</b> to{" "}
+          ETH from <b className="font-semibold">Arbitrum</b> to{" "}
           <b className="font-semibold">Ethereum</b> has been successfully
           initiated
         </div>

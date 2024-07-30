@@ -10,9 +10,8 @@ import {
 } from "@arbitrum/sdk";
 import { ArbSys__factory } from "@arbitrum/sdk/dist/lib/abi/factories/ArbSys__factory";
 import { ARB_SYS_ADDRESS } from "@arbitrum/sdk/dist/lib/dataEntities/constants";
-import { ethers, Wallet } from "ethers";
+import { ethers, Signer, Wallet } from "ethers";
 import { useAccount } from "wagmi";
-import { useEthersSigner } from "./useEthersSigner.js";
 
 enum ClaimStatus {
   PENDING = "PENDING",
@@ -25,37 +24,18 @@ const l2Networks = {
   [sepolia.id]: arbitrumSepolia.id,
 } as const;
 
-const switchToChain = async (chainId: number) => {
-  try {
-    await window.ethereum.request({
-      method: "wallet_switchEthereumChain",
-      params: [{ chainId: ethers.utils.hexValue(chainId) }],
-    });
-  } catch (switchError) {
-    console.error("Error switching network:", switchError);
-  }
-};
-
 export default function useArbitrum() {
   const { chain } = useAccount();
   const parentNetwork = sepolia;
   const childNetworkId =
     l2Networks[parentNetwork.id as keyof typeof l2Networks];
-  const L1Signer = useEthersSigner({ chainId: parentNetwork.id });
-  const L2Signer = useEthersSigner({
-    chainId: childNetworkId,
-  });
 
-  async function sendWithDelayedInbox(tx: any) {
-    if (!L2Signer || !L1Signer) return;
-    const l2Network = getArbitrumNetwork(await L2Signer.getChainId());
-    const inboxSdk = new InboxTools(L1Signer, l2Network);
+  async function sendWithDelayedInbox(signer: Signer, tx: any) {
+    const l2Network = getArbitrumNetwork(childNetworkId);
 
     // extract l2's tx hash first so we can check if this tx executed on l2 later.
-    if (chain?.id !== arbitrumSepolia.id) {
-      await switchToChain(42161);
-    }
-    const l2SignedTx = await inboxSdk.signChildTx(tx, L2Signer);
+    const inboxSdk = new InboxTools(signer, l2Network);
+    const l2SignedTx = await inboxSdk.signChildTx(tx, signer);
 
     const l2Txhash = ethers.utils.parseTransaction(l2SignedTx).hash;
 
@@ -90,10 +70,9 @@ export default function useArbitrum() {
     } else return null;
   }
 
-  function assembleWithdraw(from: string, amountInWei: number) {
-    if (!L2Signer) return;
+  function assembleWithdraw(signer: Signer, from: string, amountInWei: number) {
     // Assemble a generic withdraw transaction
-    const arbSys = ArbSys__factory.connect(ARB_SYS_ADDRESS, L2Signer.provider);
+    const arbSys = ArbSys__factory.connect(ARB_SYS_ADDRESS, signer.provider!);
     const arbsysIface = arbSys.interface;
     const calldatal2 = arbsysIface.encodeFunctionData("withdrawEth", [from]);
 
@@ -104,10 +83,14 @@ export default function useArbitrum() {
     };
   }
 
-  async function initiateWithdraw(amountInWei: number) {
-    if (!L2Signer) return;
-    const bridgeTx = assembleWithdraw(await L2Signer.getAddress(), amountInWei);
-    return await sendWithDelayedInbox(bridgeTx);
+  async function initiateWithdraw(signer: Signer, amountInWei: number) {
+    const bridgeTx = assembleWithdraw(
+      signer,
+      await signer.getAddress(),
+      amountInWei
+    );
+
+    return await sendWithDelayedInbox(signer, bridgeTx);
   }
 
   async function getClaimStatus(

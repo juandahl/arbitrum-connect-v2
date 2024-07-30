@@ -1,4 +1,5 @@
 import useArbitrum from "@/hooks/useArbitrum";
+import { useEthersSigner } from "@/hooks/useEthersSigner";
 import LocalStorageService from "@/lib/localStorageService";
 import { useEffect, useState } from "react";
 import TermsModal from "../layout/TermsModal";
@@ -21,8 +22,9 @@ export default function Transaction() {
   const [showModal, setShowModal] = useState(true);
   const [txHistory, setTxHistory] = useState<string[]>([]);
   const [currentTx, setCurrentTx] = useState<string>("");
+  const newSigner = useEthersSigner();
   const onReviewSubmit = () => {
-    initiateWithdraw(amount).then((x) => {
+    initiateWithdraw(newSigner!, amount).then((x) => {
       if (!x?.l2Txhash) {
         console.log("Something went wrong, we couldn't get l2tx hash");
         return;
