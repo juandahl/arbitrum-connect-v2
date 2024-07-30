@@ -1,8 +1,6 @@
 import "@rainbow-me/rainbowkit/styles.css";
 import { arbitrum, arbitrumSepolia, mainnet, sepolia } from "wagmi/chains";
-
 import {
-  ArbitrumNetwork,
   ChildToParentMessageStatus,
   ChildTransactionReceipt,
   getArbitrumNetwork,
@@ -10,8 +8,10 @@ import {
 } from "@arbitrum/sdk";
 import { ArbSys__factory } from "@arbitrum/sdk/dist/lib/abi/factories/ArbSys__factory";
 import { ARB_SYS_ADDRESS } from "@arbitrum/sdk/dist/lib/dataEntities/constants";
-import { ethers, Signer, Wallet } from "ethers";
-import { useAccount } from "wagmi";
+import { ethers } from "ethers";
+import { useAccount, useSwitchChain, useWalletClient } from "wagmi";
+import { useEthersSigner } from "./useEthersSigner";
+import { useEthersProvider } from "./useEthersProvider";
 
 enum ClaimStatus {
   PENDING = "PENDING",
@@ -24,22 +24,49 @@ const l2Networks = {
   [sepolia.id]: arbitrumSepolia.id,
 } as const;
 
-export default function useArbitrum() {
-  const { chain } = useAccount();
-  const parentNetwork = sepolia;
-  const childNetworkId =
-    l2Networks[parentNetwork.id as keyof typeof l2Networks];
+export default function useArbitrumBridge() {
+  const parentChainId = sepolia.id;
+  const childNetworkId = l2Networks[parentChainId];
+  const { switchChainAsync } = useSwitchChain();
+  const { chain, address } = useAccount();
+  const { data } = useWalletClient();
+  const signer = useEthersSigner();
+  const provider = useEthersProvider();
 
-  async function sendWithDelayedInbox(signer: Signer, tx: any) {
-    const l2Network = getArbitrumNetwork(childNetworkId);
+  async function ensureChainId(chainId: number) {
+    if (chain?.id !== chainId) {
+      await switchChainAsync({ chainId });
+    }
+  }
+
+  async function getSigner(chainId: number): Promise<ethers.providers.JsonRpcSigner> {
+    await ensureChainId(chainId)
+
+    if (!signer) throw new Error("No signer")
+    return signer;
+  }
+
+  async function  getProvider(chainId: number): Promise<ethers.providers.JsonRpcProvider> {
+    await ensureChainId(chainId)
+
+    if (!provider) throw new Error("No provider")
+    return provider
+  }
+
+  async function sendWithDelayedInbox(tx: any) {
+    const l2Network = await getArbitrumNetwork(childNetworkId);
+    const inboxSdk = new InboxTools(signer!, l2Network);
 
     // extract l2's tx hash first so we can check if this tx executed on l2 later.
-    const inboxSdk = new InboxTools(signer, l2Network);
-    const l2SignedTx = await inboxSdk.signChildTx(tx, signer);
+    console.log("here");
+    const l2Signer = await getSigner(childNetworkId)
+    const l2SignedTx = await inboxSdk.signChildTx(tx, l2Signer);
 
-    const l2Txhash = ethers.utils.parseTransaction(l2SignedTx).hash;
+    console.log("abc", l2SignedTx);
+    const l2Txhash = l2SignedTx;
 
     // send tx to l1 delayed inbox
+    await ensureChainId(parentChainId);
     const resultsL1 = await inboxSdk.sendChildSignedTx(l2SignedTx);
     if (resultsL1 == null) {
       throw new Error(`Failed to send tx to l1 delayed inbox!`);
@@ -49,18 +76,18 @@ export default function useArbitrum() {
     return { l2Txhash, l1Txhash: inboxRec.transactionHash };
   }
 
-  async function isForceIncludePossible(l1Wallet: Wallet, l2Wallet: Wallet) {
-    console.log("id", await l2Wallet.getChainId());
-    const l2Network = getArbitrumNetwork(
-      l2Networks[(await l2Wallet.getChainId()) as keyof typeof l2Networks]
-    );
+  async function isForceIncludePossible() {
+    const l1Wallet = await getSigner(parentChainId);
+    const l2Network = getArbitrumNetwork(childNetworkId);
     const inboxSdk = new InboxTools(l1Wallet, l2Network);
 
     return !!(await inboxSdk.getForceIncludableEvent());
   }
 
-  async function forceInclude(l1Signer: Wallet, l2Network: ArbitrumNetwork) {
-    const inboxTools = new InboxTools(l1Signer, l2Network);
+  async function forceInclude() {
+    const l1Wallet = await getSigner(parentChainId);
+    const l2Network = getArbitrumNetwork(childNetworkId);
+    const inboxTools = new InboxTools(l1Wallet, l2Network);
 
     const forceInclusionTx = await inboxTools.forceInclude();
     console.log("forceInclusionTx: ", forceInclusionTx);
@@ -70,10 +97,9 @@ export default function useArbitrum() {
     } else return null;
   }
 
-  function assembleWithdraw(signer: Signer, from: string, amountInWei: number) {
+  async function assembleWithdraw(from: string, amountInWei: number) {
     // Assemble a generic withdraw transaction
-    const arbSys = ArbSys__factory.connect(ARB_SYS_ADDRESS, signer.provider!);
-    const arbsysIface = arbSys.interface;
+    const arbsysIface = ArbSys__factory.createInterface();
     const calldatal2 = arbsysIface.encodeFunctionData("withdrawEth", [from]);
 
     return {
@@ -83,21 +109,17 @@ export default function useArbitrum() {
     };
   }
 
-  async function initiateWithdraw(signer: Signer, amountInWei: number) {
-    const bridgeTx = assembleWithdraw(
-      signer,
-      await signer.getAddress(),
-      amountInWei
-    );
+  async function initiateWithdraw(amountInWei: number) {
+    if (!address) {
+      throw new Error("No address available");
+    }
 
-    return await sendWithDelayedInbox(signer, bridgeTx);
+    return await sendWithDelayedInbox(
+      await assembleWithdraw(address, amountInWei)
+    );
   }
 
-  async function getClaimStatus(
-    txnHash: string,
-    l1Wallet: Wallet,
-    l2Provider: ethers.providers.JsonRpcProvider
-  ): Promise<ClaimStatus> {
+  async function getClaimStatus(txnHash: string): Promise<ClaimStatus> {
     if (!txnHash) {
       throw new Error(
         "Provide a transaction hash of an L2 transaction that sends an L2 to L1 message"
@@ -106,6 +128,9 @@ export default function useArbitrum() {
     if (!txnHash.startsWith("0x") || txnHash.trim().length != 66) {
       throw new Error(`Hmm, ${txnHash} doesn't look like a txn hash...`);
     }
+
+    const l2Provider = await getProvider(childNetworkId);
+    const l1Wallet = await getSigner(parentChainId);
 
     // First, let's find the Arbitrum txn from the txn hash provided
     const receipt = await l2Provider.getTransactionReceipt(txnHash);
@@ -136,11 +161,7 @@ export default function useArbitrum() {
     }
   }
 
-  async function claimFunds(
-    txnHash: string,
-    l1Wallet: Wallet,
-    l2Provider: ethers.providers.JsonRpcProvider
-  ) {
+  async function claimFunds(txnHash: string) {
     if (!txnHash) {
       throw new Error(
         "Provide a transaction hash of an L2 transaction that sends an L2 to L1 message"
@@ -149,6 +170,9 @@ export default function useArbitrum() {
     if (!txnHash.startsWith("0x") || txnHash.trim().length != 66) {
       throw new Error(`Hmm, ${txnHash} doesn't look like a txn hash...`);
     }
+
+    const l2Provider = await getProvider(childNetworkId);
+    const l1Wallet = await getSigner(parentChainId);
 
     // First, let's find the Arbitrum txn from the txn hash provided
     const receipt = await l2Provider.getTransactionReceipt(txnHash);
@@ -176,12 +200,10 @@ export default function useArbitrum() {
   }
 
   return {
-    sendWithDelayedInbox,
     isForceIncludePossible,
     forceInclude,
-    assembleWithdraw,
     initiateWithdraw,
     getClaimStatus,
     claimFunds,
-  } as const;
+  };
 }

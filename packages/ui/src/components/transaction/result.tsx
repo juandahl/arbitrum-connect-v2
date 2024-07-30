@@ -4,6 +4,7 @@ import StepOneIcon from "@/assets/step-one.svg";
 import StepThreeIcon from "@/assets/step-three.svg";
 import StepTwoIcon from "@/assets/step-two.svg";
 import cn from "classnames";
+import { CheckIcon } from "lucide-react";
 import { useBlock, useTransactionReceipt } from "wagmi";
 
 export default function TransactionResultCard({
@@ -56,20 +57,34 @@ export default function TransactionResultCard({
           </div>
         )}
       </div>
+
+      {/* Steps */}
       <div className="h-[17.625rem] flex flex-col text-start justify-between bg-gray-100 border border-neutral-200 rounded-2xl overflow-hidden">
         <div className="flex flex-col grow justify-between p-6 mb-3">
-          <div className="flex gap-3">
-            <img src={StepOneIcon} />
-            <div className="text-lg">Initiate Withdraw</div>
-          </div>
-          <div className="flex gap-3">
-            <img src={StepTwoIcon} />
-            <div className="text-lg">Waiting Period</div>
-          </div>
-          <div className="flex gap-3">
-            <img src={StepThreeIcon} />
-            <div className="text-lg">Claim funds on Ethereum</div>
-          </div>
+          <Step
+            number={1}
+            title="Initiate Withdraw"
+            onClick={() => null}
+            done
+          />
+          <Step
+            number={2}
+            title="Waiting Period"
+            onClick={() => null}
+            disabled
+          />
+          <Step
+            number={3}
+            title="Force transaction"
+            onClick={() => null}
+            disabled
+          />
+          <Step
+            number={4}
+            title="Claim funds on Ethereum"
+            onClick={() => null}
+            disabled
+          />
         </div>
         <div className="bg-gray-200 px-4 py-3">
           <div className="text-sm">
@@ -78,11 +93,10 @@ export default function TransactionResultCard({
           </div>
         </div>
       </div>
+
       <button
         type="button"
-        className={cn("btn btn-primary", {
-          "btn-disabled": false,
-        })}
+        className={cn("btn btn-primary", { "btn-disabled": false })}
         style={{
           border: "1px solid black",
           borderRadius: 16,
@@ -105,6 +119,40 @@ export default function TransactionResultCard({
       >
         Return home
       </button>
+    </div>
+  );
+}
+
+function Step(props: {
+  number: number;
+  title: string;
+  onClick?: () => void;
+  action?: string;
+  disabled?: boolean;
+  done?: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex space-x-3 items-center">
+        {props.done ? (
+          <div className="h-5 w-5 flex justify-center items-center rounded-full bg-green-500">
+            <CheckIcon className="h-4 w-4 text-white" />
+          </div>
+        ) : (
+          <div className="h-5 w-5 flex justify-center items-center rounded-full border-2 border-gray-800">
+            <span className="text-xs">{props.number}</span>
+          </div>
+        )}
+        <div className={cn("text-lg", props.done && "text-green-500")}>
+          {props.title}
+        </div>
+      </div>
+
+      {props.disabled || props.done ? null : (
+        <button onClick={props.onClick} className="btn btn-primary btn-sm">
+          {props.action ?? "Initiate"}
+        </button>
+      )}
     </div>
   );
 }
