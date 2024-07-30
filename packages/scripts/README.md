@@ -1,13 +1,17 @@
 
 # Setup
 
-Patches in node_modules
+## Patches in node_modules:
+
+Apply fixes from this PR -> https://github.com/OffchainLabs/arbitrum-sdk/pull/520 (TODO: Create patch in the meantime)
 
 To use `hardhat forks` you need to comment:line 272 within `signChildTx` in `@arbitrum/sdk/dist/lib/inbox/inbox.js`
 
 ```
 // tx.gasLimit = (await this.estimateArbitrumGas(tx, childSigner.provider)).gasEstimateForChild;
 ```
+
+## env file
 
 .env example
 
