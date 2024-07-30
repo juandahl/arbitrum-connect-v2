@@ -1,12 +1,10 @@
 import useArbitrumBridge from "@/hooks/useArbitrum";
-import { useEthersSigner } from "@/hooks/useEthersSigner";
 import LocalStorageService from "@/lib/localStorageService";
 import { useEffect, useState } from "react";
 import TermsModal from "../layout/TermsModal";
 import TransactionAmountCard from "./amount";
 import TransactionResultCard from "./result";
 import TransactionReviewCard from "./review";
-import { useSwitchChain } from "wagmi";
 
 enum STEPS {
   menu,
@@ -20,78 +18,32 @@ export default function Transaction() {
   const [currentStep, setCurrentStep] = useState(STEPS.menu);
   const [amount, setAmount] = useState<number>(0);
   const [showModal, setShowModal] = useState(true);
-  const [txHistory, setTxHistory] = useState<string[]>(["0x123"]);
-  const [currentTx, setCurrentTx] = useState<string>("0x123");
+  const [txHistory, setTxHistory] = useState<string[]>([]);
+  const [currentTx, setCurrentTx] = useState<string>();
   const { initiateWithdraw } = useArbitrumBridge();
-  const signer = useEthersSigner();
-  // const [l2Tx, setL2Tx] = useState("");
-  const { switchChainAsync } = useSwitchChain();
 
   const onReviewSubmit = async () => {
-    // await switchChainAsync({ chainId: 11155111 })
-    // await switchChainAsync({ chainId: 421614 });
-    // console.log("ok");
-    // await signer?.sendTransaction({
-    //   to: "0x44cdA3f339444F2FD5C34783c0d0d487E5Dc0f27",
-    //   value: 0,
-    // });
+    initiateWithdraw(amount)
+      .then((x) => {
+        console.log("Transaction hashes: ", x);
 
-    initiateWithdraw(1).then(console.log);
+        if (!x?.l2Txhash) {
+          window.alert("Something went wrong, we couldn't get l2tx hash");
+          return;
+        }
 
-    // const tx = {
-    //   to: "0x44cdA3f339444F2FD5C34783c0d0d487E5Dc0f27",
-    //   value: 0,
-    // };
-    // signer?.populateTransaction(tx).then((populatedTx) => {
-    //   signer.signTransaction(populatedTx)
-    // })
+        new LocalStorageService().setItem(
+          "transactions",
+          JSON.stringify([...txHistory, x.l2Txhash])
+        );
 
-    // window.ethereum
-    //   .request({
-    //     method: "eth_signTransaction",
-    //     params: [
-    //       {
-    //         to: "0x44cdA3f339444F2FD5C34783c0d0d487E5Dc0f27",
-    //         value: 0,
-    //       },
-    //     ],
-    //   })
-    //   .then((signedTx: any) => {
-    //     console.log("Signed transaction:", signedTx);
-    //   });
-
-    // initiateWithdraw(1).then((x) => {
-    //   console.log("Transaction hash: ", x);
-    //   if (!x?.l2Txhash) {
-    //     console.log("Something went wrong, we couldn't get l2tx hash");
-    //     return;
-    //   }
-
-    //   new LocalStorageService().setItem(
-    //     "transactions",
-    //     JSON.stringify([...txHistory, x.l2Txhash])
-    //   );
-
-    //   setCurrentTx(x.l2Txhash);
-    //   setCurrentStep(STEPS.result);
-    // }).catch(e => {
-    //   console.error(e);
-    // })
+        setCurrentTx(x.l2Txhash);
+        setCurrentStep(STEPS.result);
+      })
+      .catch((e) => {
+        console.error(e);
+      });
   };
-
-  // const onSendToDelayedInbox = () => {
-  //   sendToDelayedInbox(l2Tx)
-  //     .then(console.log)
-  //     .then(() => {
-  //       new LocalStorageService().setItem(
-  //         "transactions",
-  //         JSON.stringify([...txHistory, l2Tx])
-  //       );
-
-  //       // setCurrentTx(l2Tx);
-  //       setCurrentStep(STEPS.result);
-  //     });
-  // };
 
   useEffect(() => {
     setTxHistory(
@@ -149,17 +101,13 @@ export default function Transaction() {
           onBack={() => {
             setCurrentStep(STEPS.amount);
           }}
-          onSubmit={async () => {
-            onReviewSubmit();
-            // if (l2Tx) onSendToDelayedInbox()
-            // else onReviewSubmit()
-          }}
+          onSubmit={onReviewSubmit}
         />
       )}
       {currentStep === STEPS.result && (
         <TransactionResultCard
           amount={amount}
-          txHash={currentTx}
+          txHash={currentTx ?? ""}
           onSubmit={() => {
             setCurrentStep(STEPS.menu);
           }}

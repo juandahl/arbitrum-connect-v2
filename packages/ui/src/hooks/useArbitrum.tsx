@@ -29,7 +29,6 @@ export default function useArbitrumBridge() {
   const childNetworkId = l2Networks[parentChainId];
   const { switchChainAsync } = useSwitchChain();
   const { chain, address } = useAccount();
-  const { data } = useWalletClient();
   const signer = useEthersSigner();
   const provider = useEthersProvider();
 
@@ -58,11 +57,8 @@ export default function useArbitrumBridge() {
     const inboxSdk = new InboxTools(signer!, l2Network);
 
     // extract l2's tx hash first so we can check if this tx executed on l2 later.
-    console.log("here");
     const l2Signer = await getSigner(childNetworkId)
     const l2SignedTx = await inboxSdk.signChildTx(tx, l2Signer);
-
-    console.log("abc", l2SignedTx);
     const l2Txhash = l2SignedTx;
 
     // send tx to l1 delayed inbox
@@ -90,7 +86,6 @@ export default function useArbitrumBridge() {
     const inboxTools = new InboxTools(l1Wallet, l2Network);
 
     const forceInclusionTx = await inboxTools.forceInclude();
-    console.log("forceInclusionTx: ", forceInclusionTx);
 
     if (forceInclusionTx) {
       return await forceInclusionTx.wait();
