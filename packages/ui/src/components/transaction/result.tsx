@@ -3,18 +3,16 @@ import CheckGreenIcon from "@/assets/check-green.svg";
 import StepOneIcon from "@/assets/step-one.svg";
 import StepThreeIcon from "@/assets/step-three.svg";
 import StepTwoIcon from "@/assets/step-two.svg";
-import LocalStorageService from "@/lib/localStorageService";
 import cn from "classnames";
-import { ContractTransaction } from "ethers";
 import { useBlock, useTransactionReceipt } from "wagmi";
 
 export default function TransactionResultCard({
   amount,
-  tx,
+  txHash,
   onSubmit,
 }: {
   amount?: number;
-  tx?: ContractTransaction;
+  txHash: string;
   onSubmit(): void;
 }) {
   const onReturnClick = () => {
@@ -23,10 +21,8 @@ export default function TransactionResultCard({
   const onActivityClick = () => {
     onSubmit();
   };
-
-  const lastTxHash = new LocalStorageService().getItem("lastTxHash");
   const txRecipt = useTransactionReceipt({
-    hash: tx ? tx.hash : lastTxHash,
+    hash: `0x${txHash}`,
   });
   const block = useBlock({ blockNumber: txRecipt.data?.blockNumber });
   const blockTimestamp = Number(block.data?.timestamp) * 1000;
@@ -42,7 +38,6 @@ export default function TransactionResultCard({
       }}
       className="flex flex-col"
     >
-      {/* {tx && amount && ( */}
       <div className="flex flex-col items-center">
         <img src={CheckGreenIcon} />
         <div className="text-4xl font-semibold mb-6">Hey! Great Job!</div>
@@ -53,7 +48,7 @@ export default function TransactionResultCard({
           initiated
         </div>
         <div className="text-xl">
-          Your transactionHash is: <b>{tx ? tx.hash : lastTxHash}</b>
+          Your transactionHash is: <b>{txHash}</b>
         </div>
         {!Number.isNaN(elapsedHours) && (
           <div className="text-xl">
@@ -61,7 +56,6 @@ export default function TransactionResultCard({
           </div>
         )}
       </div>
-      {/* )} */}
       <div className="h-[17.625rem] flex flex-col text-start justify-between bg-gray-100 border border-neutral-200 rounded-2xl overflow-hidden">
         <div className="flex flex-col grow justify-between p-6 mb-3">
           <div className="flex gap-3">

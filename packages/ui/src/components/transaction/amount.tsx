@@ -125,9 +125,9 @@ export default function TransactionAmountCard({
           <hr className="w-full pb-6" />
           <div className="flex justify-between items-center w-full">
             <div className="flex items-center gap-4">
-              <img src={ArbitrumIcon} />
+              <img src={EthereumIcon} />
               <div className="flex flex-col text-left">
-                <div className="font-bold text-xl">ARB</div>
+                <div className="font-bold text-xl">ETH</div>
                 <div className="text-neutral-500">Balance {arbBalance}</div>
               </div>
             </div>
