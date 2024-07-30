@@ -10,9 +10,13 @@
   "license": "ISC",
   "dependencies": {
     "@arbitrum/sdk": "^4.0.0",
-    "dotenv": "^16.4.5"
+    "axios": "^1.7.2",
+    "dotenv": "^16.4.5",
+    "ethers": "^5.7.2",
+    "hardhat": "^2.22.7"
   },
   "devDependencies": {
-    "@types/node": "^22.0.0"
+    "@types/node": "^22.0.0",
+    "ts-node": "^10.9.2"
   }
 }

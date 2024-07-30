@@ -1,7 +1,6 @@
 import "dotenv/config"
 import { providers, Wallet, ethers } from 'ethers'
 import {
-    ArbitrumNetwork,
     getArbitrumNetwork,
 } from '@arbitrum/sdk/dist/lib/dataEntities/networks'
 import {
@@ -41,14 +40,14 @@ async function sendWithDelayedInbox(tx: any, l1Wallet: Wallet, l2Wallet: Wallet)
 }
 
 async function isForceIncludePossible(l1Wallet: Wallet, l2Wallet: Wallet) {
-    console.log("id", await l2Wallet.getChainId())
     const l2Network = getArbitrumNetwork(await l2Wallet.getChainId());
     const inboxSdk = new InboxTools(l1Wallet, l2Network);
 
     return !!(await inboxSdk.getForceIncludableEvent());
 }
 
-async function forceInclude(l1Signer: Wallet, l2Network: ArbitrumNetwork) {
+async function forceInclude(l1Signer: Wallet, l2Wallet: Wallet) {
+    const l2Network = getArbitrumNetwork(await l2Wallet.getChainId());
     const inboxTools = new InboxTools(l1Signer, l2Network);
 
     const forceInclusionTx = await inboxTools.forceInclude();
@@ -164,6 +163,10 @@ const l2Provider = new providers.JsonRpcProvider(process.env.L2RPC)
 const l1Wallet = new Wallet(walletPrivateKey, l1Provider)
 const l2Wallet = new Wallet(walletPrivateKey, l2Provider)
 
+// l2Wallet.getChainId().then(console.log)
+// l2Wallet.getBalance().then(console.log)
+// l1Wallet.provider.getBlock('latest').then(b => console.log(b.timestamp))
+
 
 // App logic ========================================================================
 // initiateWithdraw(l1Wallet, l2Wallet, 1000000000000000000)
@@ -176,9 +179,12 @@ const l2Wallet = new Wallet(walletPrivateKey, l2Provider)
 // initiateWithdraw(l1Wallet, l2Wallet, 1).then(console.log)
 
 // const l2Hash = "0xba46de8a236f34ee520aa920384d4222046858dc62bbc7e99f75854e89454770"
+// const l2Hash= "0xf3b711171f2ae58b8ab0c3629dec93e49f119b3a58aa6311ac2ce23a0ad2cb0f"
 // getClaimStatus(l2Hash, l1Wallet, l2Provider).then(console.log)
 
 // isForceIncludePossible(l1Wallet, l2Wallet).then(console.log)
+
+// forceInclude(l1Wallet, l2Wallet).then(console.log)
 
 // claimFunds(l2Hash, l1Wallet, l2Provider).then(console.log)
 
