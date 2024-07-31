@@ -27,10 +27,9 @@ export default function TransactionReview({
   return (
     <div
       style={{
-        width: "37.5rem",
         gap: 24,
       }}
-      className="flex flex-col py-4"
+      className="flex flex-col"
     >
       <button className="flex items-center flex-row gap-3" onClick={onBack}>
         <img src={ChevronLeftIcon} />

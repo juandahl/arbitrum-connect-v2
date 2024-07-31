@@ -32,7 +32,6 @@ export default function TransactionAmount({
 }) {
   const { openConnectModal } = useConnectModal();
   const { openChainModal } = useChainModal();
-  // const usdAmountRef = useRef<HTMLInputElement>(null);
   const { address } = useAccount();
   const { isChainValid } = useChain();
   const arbBalance = useArbitrumBalance();
@@ -67,7 +66,7 @@ export default function TransactionAmount({
         <img src={ChevronLeftIcon} />
         <div className="font-semibold text-xl">Back</div>
       </button>
-      <div className="flex flex-col gap-6 w-150">
+      <div className="flex flex-col gap-6">
         <div className="flex text-left justify-between items-center bg-neutral-50 border border-neutral-200 rounded-2xl p-5">
           <div className="flex flex-row gap-3 items-start">
             <img src={ArbitrumIcon} />
