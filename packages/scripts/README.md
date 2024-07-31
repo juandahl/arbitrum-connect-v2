@@ -3,7 +3,7 @@
 
 ## Patches in node_modules:
 
-Apply fixes from this PR -> https://github.com/OffchainLabs/arbitrum-sdk/pull/520 (TODO: Create patch in the meantime)
+Apply fixes from this PR -> https://github.com/OffchainLabs/arbitrum-sdk/pull/520 (There's already patch executed in `postinstall`)
 
 To use `hardhat forks` you need to comment:line 272 within `signChildTx` in `@arbitrum/sdk/dist/lib/inbox/inbox.js`
 
