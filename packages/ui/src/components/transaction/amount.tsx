@@ -32,7 +32,6 @@ export default function TransactionAmount({
 }) {
   const { openConnectModal } = useConnectModal();
   const { openChainModal } = useChainModal();
-  // const usdAmountRef = useRef<HTMLInputElement>(null);
   const { address } = useAccount();
   const { isChainValid } = useChain();
   const arbBalance = useArbitrumBalance();

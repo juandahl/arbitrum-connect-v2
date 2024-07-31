@@ -1,12 +1,9 @@
 import useArbitrumBridge from "@/hooks/useArbitrum";
 import { useEffect, useState } from "react";
 import TermsModal from "../layout/terms-modal";
-import TransactionAmountCard from "./amount";
 import TransactionResultCard from "./result";
-import TransactionReviewCard from "./review";
 import TransactionsActivity from "./activity";
 import TransactionAmount from "./amount";
-import TransactionResult from "./result";
 import TransactionReview from "./review";
 
 enum STEPS {
@@ -74,8 +71,12 @@ export default function Transaction() {
       )}
       {currentStep === STEPS.list && (
         <TransactionsActivity
+          txHistory={txHistory}
+          setCurrentTx={(tx) => {
+            setCurrentTx(tx)
+            setCurrentStep(STEPS.result);
+          }}
           onBack={() => setCurrentStep(STEPS.menu)}
-          onTxSelected={setCurrentTx}
         />
       )}
       {currentStep === STEPS.amount && (
