@@ -4,14 +4,15 @@ import StepOneIcon from "@/assets/step-one.svg";
 import StepThreeIcon from "@/assets/step-three.svg";
 import StepTwoIcon from "@/assets/step-two.svg";
 import cn from "classnames";
+import { formatEther } from "ethers/lib/utils";
 import { useMemo, useState } from "react";
 
 export default function TransactionReview({
-  amount,
+  amountInWei,
   onSubmit,
   onBack,
 }: {
-  amount?: number;
+  amountInWei: string;
   onSubmit(): void;
   onBack(): void;
 }) {
@@ -26,10 +27,7 @@ export default function TransactionReview({
 
   return (
     <div
-      style={{
-        gap: 24,
-      }}
-      className="flex flex-col"
+      className="flex flex-col max-w-xl mx-auto gap-6"
     >
       <button className="flex items-center flex-row gap-3" onClick={onBack}>
         <img src={ChevronLeftIcon} />
@@ -41,7 +39,7 @@ export default function TransactionReview({
         <div className="flex items-center flex-row gap-3">
           <img src={EthIcon} />
           <div className="flex items-end flex-row ">
-            <div className="text-4xl font-bold">{`${amount}`}</div>
+            <div className="text-4xl font-bold">{`${formatEther(amountInWei)}`}</div>
             <div className="ml-0.5 text-lg font-bold">ETH</div>
           </div>
         </div>

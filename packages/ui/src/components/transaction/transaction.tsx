@@ -22,21 +22,21 @@ export interface Transaction {
 
 export default function Transaction() {
   const [currentStep, setCurrentStep] = useState(STEPS.menu);
-  const [amount, setAmount] = useState<number>(0);
+  const [amountInWei, setAmountInWei] = useState<string>("0");
   const [showModal, setShowModal] = useState(true);
   const [txHistory, setTxHistory] = useState<Transaction[]>([]);
   const [currentTx, setCurrentTx] = useState<Transaction | null>();
   const { initiateWithdraw } = useArbitrumBridge();
 
   const onReviewSubmit = async () => {
-    initiateWithdraw(1)
+    initiateWithdraw(amountInWei)
       .then((x) => {
         console.log("Transaction hashes: ", x);
 
         const tx: Transaction = {
           bridgeHash: x.l2Txhash,
           delayedInboxHash: x.l1Txhash,
-          amount: String(amount), // TODO: temporary until we get amount in wei from input
+          amount: amountInWei,
         };
 
         localStorage.setItem(
@@ -81,19 +81,19 @@ export default function Transaction() {
       )}
       {currentStep === STEPS.amount && (
         <TransactionAmount
-          amount={amount}
+          // amount={amount}
           onBack={() => {
             setCurrentStep(STEPS.menu);
           }}
           onSubmit={(amount) => {
-            setAmount(amount);
+            setAmountInWei(amount);
             setCurrentStep(STEPS.review);
           }}
         />
       )}
       {currentStep === STEPS.review && (
         <TransactionReview
-          amount={amount}
+          amountInWei={amountInWei}
           onBack={() => {
             setCurrentStep(STEPS.amount);
           }}
