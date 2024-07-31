@@ -1,10 +1,11 @@
 import useArbitrumBridge from "@/hooks/useArbitrum";
 import LocalStorageService from "@/lib/localStorageService";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import TermsModal from "../layout/TermsModal";
-import TransactionAmountCard from "./amount";
-import TransactionResultCard from "./result";
-import TransactionReviewCard from "./review";
+import TransactionsActivity from "./activity";
+import TransactionAmount from "./amount";
+import TransactionResult from "./result";
+import TransactionReview from "./review";
 
 enum STEPS {
   menu,
@@ -18,7 +19,6 @@ export default function Transaction() {
   const [currentStep, setCurrentStep] = useState(STEPS.menu);
   const [amount, setAmount] = useState<number>(0);
   const [showModal, setShowModal] = useState(true);
-  const [txHistory, setTxHistory] = useState<string[]>([]);
   const [currentTx, setCurrentTx] = useState<string>();
   const { initiateWithdraw } = useArbitrumBridge();
 
@@ -31,11 +31,9 @@ export default function Transaction() {
           window.alert("Something went wrong, we couldn't get l2tx hash");
           return;
         }
-
-        new LocalStorageService().setItem(
-          "transactions",
-          JSON.stringify([...txHistory, x.l2Txhash])
-        );
+        const txHistory =
+          LocalStorageService.getItem<string[]>("transactions") ?? [];
+        LocalStorageService.setItem("transactions", [...txHistory, x.l2Txhash]);
 
         setCurrentTx(x.l2Txhash);
         setCurrentStep(STEPS.result);
@@ -44,12 +42,6 @@ export default function Transaction() {
         console.error(e);
       });
   };
-
-  useEffect(() => {
-    setTxHistory(
-      JSON.parse(new LocalStorageService().getItem("transactions")) ?? []
-    );
-  }, []);
 
   return (
     <div className="flex flex-col items-center grow justify-center">
@@ -64,27 +56,13 @@ export default function Transaction() {
         </div>
       )}
       {currentStep === STEPS.list && (
-        <div>
-          <button className="btn" onClick={() => setCurrentStep(STEPS.menu)}>
-            Go back
-          </button>
-          {txHistory.map((x) => (
-            <div>
-              {x}{" "}
-              <button
-                onClick={() => {
-                  setCurrentTx(x);
-                  setCurrentStep(STEPS.result);
-                }}
-              >
-                view detail
-              </button>
-            </div>
-          ))}
-        </div>
+        <TransactionsActivity
+          onBack={() => setCurrentStep(STEPS.menu)}
+          onTxSelected={setCurrentTx}
+        />
       )}
       {currentStep === STEPS.amount && (
-        <TransactionAmountCard
+        <TransactionAmount
           amount={amount}
           onBack={() => {
             setCurrentStep(STEPS.menu);
@@ -96,7 +74,7 @@ export default function Transaction() {
         />
       )}
       {currentStep === STEPS.review && (
-        <TransactionReviewCard
+        <TransactionReview
           amount={amount}
           onBack={() => {
             setCurrentStep(STEPS.amount);
@@ -105,7 +83,7 @@ export default function Transaction() {
         />
       )}
       {currentStep === STEPS.result && (
-        <TransactionResultCard
+        <TransactionResult
           amount={amount}
           txHash={currentTx ?? ""}
           onSubmit={() => {
