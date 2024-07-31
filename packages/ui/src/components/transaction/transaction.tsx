@@ -4,6 +4,10 @@ import TermsModal from "../layout/terms-modal";
 import TransactionAmountCard from "./amount";
 import TransactionResultCard from "./result";
 import TransactionReviewCard from "./review";
+import TransactionsActivity from "./activity";
+import TransactionAmount from "./amount";
+import TransactionResult from "./result";
+import TransactionReview from "./review";
 
 enum STEPS {
   menu,
@@ -69,30 +73,13 @@ export default function Transaction() {
         </div>
       )}
       {currentStep === STEPS.list && (
-        <div className="max-w-xl text-left w-full space-y-8">
-          <button className="btn" onClick={() => setCurrentStep(STEPS.menu)}>
-            Go back
-          </button>
-          <ul>
-            {txHistory.map((x) => (
-              <li key={x.bridgeHash} className="list-disc ml-4">
-                {x.bridgeHash}{" "}
-                <button
-                  className="link"
-                  onClick={() => {
-                    setCurrentTx(x);
-                    setCurrentStep(STEPS.result);
-                  }}
-                >
-                  View detail
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <TransactionsActivity
+          onBack={() => setCurrentStep(STEPS.menu)}
+          onTxSelected={setCurrentTx}
+        />
       )}
       {currentStep === STEPS.amount && (
-        <TransactionAmountCard
+        <TransactionAmount
           amount={amount}
           onBack={() => {
             setCurrentStep(STEPS.menu);
@@ -104,7 +91,7 @@ export default function Transaction() {
         />
       )}
       {currentStep === STEPS.review && (
-        <TransactionReviewCard
+        <TransactionReview
           amount={amount}
           onBack={() => {
             setCurrentStep(STEPS.amount);

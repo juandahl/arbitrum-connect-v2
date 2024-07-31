@@ -21,7 +21,7 @@ const formSchema = z.object({
 
 type FormType = z.infer<typeof formSchema>;
 
-export default function TransactionAmountCard({
+export default function TransactionAmount({
   onSubmit,
   onBack,
   amount,
