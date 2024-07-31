@@ -46,7 +46,8 @@ export default function useArbitrumBridge() {
   }
 
   async function  getProvider(chainId: number): Promise<ethers.providers.JsonRpcProvider> {
-    await ensureChainId(chainId)
+    // TODO: let's use custom providers
+    // await ensureChainId(chainId)
 
     if (!provider) throw new Error("No provider")
     return provider
@@ -85,6 +86,10 @@ export default function useArbitrumBridge() {
     const l2Network = getArbitrumNetwork(childNetworkId);
     const inboxTools = new InboxTools(l1Wallet, l2Network);
 
+    if (!await inboxTools.getForceIncludableEvent()) {
+      throw new Error("Force inclusion is not possible");
+    }
+
     const forceInclusionTx = await inboxTools.forceInclude();
 
     if (forceInclusionTx) {
@@ -114,21 +119,21 @@ export default function useArbitrumBridge() {
     );
   }
 
-  async function getClaimStatus(txnHash: string): Promise<ClaimStatus> {
-    if (!txnHash) {
+  async function getClaimStatus(l2TxnHash: string): Promise<ClaimStatus> {
+    if (!l2TxnHash) {
       throw new Error(
         "Provide a transaction hash of an L2 transaction that sends an L2 to L1 message"
       );
     }
-    if (!txnHash.startsWith("0x") || txnHash.trim().length != 66) {
-      throw new Error(`Hmm, ${txnHash} doesn't look like a txn hash...`);
+    if (!l2TxnHash.startsWith("0x") || l2TxnHash.trim().length != 66) {
+      throw new Error(`Hmm, ${l2TxnHash} doesn't look like a txn hash...`);
     }
 
     const l2Provider = await getProvider(childNetworkId);
-    const l1Wallet = await getSigner(parentChainId);
+    
 
     // First, let's find the Arbitrum txn from the txn hash provided
-    const receipt = await l2Provider.getTransactionReceipt(txnHash);
+    const receipt = await l2Provider.getTransactionReceipt(l2TxnHash);
     if (receipt === null) {
       return ClaimStatus.PENDING;
     }
@@ -136,6 +141,7 @@ export default function useArbitrumBridge() {
 
     // In principle, a single transaction could trigger any number of outgoing messages; the common case will be there's only one.
     // We assume there's only one / just grad the first one.
+    const l1Wallet = await getSigner(parentChainId);
     const messages = await l2Receipt.getChildToParentMessages(l1Wallet);
     const l2ToL1Msg = messages[0];
 
@@ -156,25 +162,25 @@ export default function useArbitrumBridge() {
     }
   }
 
-  async function claimFunds(txnHash: string) {
-    if (!txnHash) {
+  async function claimFunds(l2TxnHash: string) {
+    if (!l2TxnHash) {
       throw new Error(
         "Provide a transaction hash of an L2 transaction that sends an L2 to L1 message"
       );
     }
-    if (!txnHash.startsWith("0x") || txnHash.trim().length != 66) {
-      throw new Error(`Hmm, ${txnHash} doesn't look like a txn hash...`);
+    if (!l2TxnHash.startsWith("0x") || l2TxnHash.trim().length != 66) {
+      throw new Error(`Hmm, ${l2TxnHash} doesn't look like a txn hash...`);
     }
 
-    const l2Provider = await getProvider(childNetworkId);
-    const l1Wallet = await getSigner(parentChainId);
-
+    
     // First, let's find the Arbitrum txn from the txn hash provided
-    const receipt = await l2Provider.getTransactionReceipt(txnHash);
+    const l2Provider = await getProvider(childNetworkId);
+    const receipt = await l2Provider.getTransactionReceipt(l2TxnHash);
     const l2Receipt = new ChildTransactionReceipt(receipt);
 
     // In principle, a single transaction could trigger any number of outgoing messages; the common case will be there's only one.
     // We assume there's only one / just grad the first one.
+    const l1Wallet = await getSigner(parentChainId);
     const messages = await l2Receipt.getChildToParentMessages(l1Wallet);
     const l2ToL1Msg = messages[0];
 

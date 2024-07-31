@@ -1,7 +1,6 @@
 import useArbitrumBridge from "@/hooks/useArbitrum";
-import LocalStorageService from "@/lib/localStorageService";
 import { useEffect, useState } from "react";
-import TermsModal from "../layout/TermsModal";
+import TermsModal from "../layout/terms-modal";
 import TransactionAmountCard from "./amount";
 import TransactionResultCard from "./result";
 import TransactionReviewCard from "./review";
@@ -14,47 +13,53 @@ enum STEPS {
   result,
 }
 
+export interface Transaction {
+  bridgeHash: string;
+  delayedInboxHash: string;
+  amount: string;
+}
+
 export default function Transaction() {
   const [currentStep, setCurrentStep] = useState(STEPS.menu);
   const [amount, setAmount] = useState<number>(0);
   const [showModal, setShowModal] = useState(true);
-  const [txHistory, setTxHistory] = useState<string[]>([]);
-  const [currentTx, setCurrentTx] = useState<string>();
+  const [txHistory, setTxHistory] = useState<Transaction[]>([]);
+  const [currentTx, setCurrentTx] = useState<Transaction | null>();
   const { initiateWithdraw } = useArbitrumBridge();
 
   const onReviewSubmit = async () => {
-    initiateWithdraw(amount)
+    initiateWithdraw(1)
       .then((x) => {
         console.log("Transaction hashes: ", x);
 
-        if (!x?.l2Txhash) {
-          window.alert("Something went wrong, we couldn't get l2tx hash");
-          return;
-        }
+        const tx: Transaction = {
+          bridgeHash: x.l2Txhash,
+          delayedInboxHash: x.l1Txhash,
+          amount: String(amount), // TODO: temporary until we get amount in wei from input
+        };
 
-        new LocalStorageService().setItem(
+        localStorage.setItem(
           "transactions",
-          JSON.stringify([...txHistory, x.l2Txhash])
+          JSON.stringify([...txHistory, tx])
         );
 
-        setCurrentTx(x.l2Txhash);
+        setCurrentTx(tx);
         setCurrentStep(STEPS.result);
       })
       .catch((e) => {
         console.error(e);
+        window.alert("Something went wrong, please try again");
       });
   };
 
   useEffect(() => {
-    setTxHistory(
-      JSON.parse(new LocalStorageService().getItem("transactions")) ?? []
-    );
+    setTxHistory(JSON.parse(localStorage.getItem("transactions") ?? "[]"));
   }, []);
 
   return (
-    <div className="flex flex-col items-center grow justify-center">
+    <div className="py-10 px-4">
       {currentStep === STEPS.menu && (
-        <div className="flex gap-2">
+        <div className="flex gap-2 justify-center">
           <button className="btn" onClick={() => setCurrentStep(STEPS.amount)}>
             New Tx
           </button>
@@ -64,23 +69,26 @@ export default function Transaction() {
         </div>
       )}
       {currentStep === STEPS.list && (
-        <div>
+        <div className="max-w-xl text-left w-full space-y-8">
           <button className="btn" onClick={() => setCurrentStep(STEPS.menu)}>
             Go back
           </button>
-          {txHistory.map((x) => (
-            <div>
-              {x}{" "}
-              <button
-                onClick={() => {
-                  setCurrentTx(x);
-                  setCurrentStep(STEPS.result);
-                }}
-              >
-                view detail
-              </button>
-            </div>
-          ))}
+          <ul>
+            {txHistory.map((x) => (
+              <li key={x.bridgeHash} className="list-disc ml-4">
+                {x.bridgeHash}{" "}
+                <button
+                  className="link"
+                  onClick={() => {
+                    setCurrentTx(x);
+                    setCurrentStep(STEPS.result);
+                  }}
+                >
+                  View detail
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
       )}
       {currentStep === STEPS.amount && (
@@ -106,11 +114,9 @@ export default function Transaction() {
       )}
       {currentStep === STEPS.result && (
         <TransactionResultCard
-          amount={amount}
-          txHash={currentTx ?? ""}
-          onSubmit={() => {
-            setCurrentStep(STEPS.menu);
-          }}
+          tx={currentTx!}
+          onGoHome={() => setCurrentStep(STEPS.menu)}
+          onGoToActivity={() => setCurrentStep(STEPS.list)}
         />
       )}
       <TermsModal isOpen={showModal} onSubmit={() => setShowModal(false)} />

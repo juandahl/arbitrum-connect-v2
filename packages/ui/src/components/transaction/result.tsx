@@ -1,91 +1,96 @@
 import BellIcon from "@/assets/bell.svg";
 import CheckGreenIcon from "@/assets/check-green.svg";
-import StepOneIcon from "@/assets/step-one.svg";
-import StepThreeIcon from "@/assets/step-three.svg";
-import StepTwoIcon from "@/assets/step-two.svg";
 import cn from "classnames";
-import { CheckIcon } from "lucide-react";
-import { useBlock, useTransactionReceipt } from "wagmi";
+import { ArrowUpRight } from "lucide-react";
+import { Transaction } from "./transaction";
+import useArbitrumBridge from "@/hooks/useArbitrum";
+import { formatEther } from "viem";
 
-export default function TransactionResultCard({
-  amount,
-  txHash,
-  onSubmit,
-}: {
-  amount?: number;
-  txHash: string;
-  onSubmit(): void;
+export default function TransactionResultCard(props: {
+  tx: Transaction;
+  onGoToActivity: () => unknown;
+  onGoHome: () => unknown;
 }) {
-  const onReturnClick = () => {
-    onSubmit();
-  };
-  const onActivityClick = () => {
-    onSubmit();
-  };
-  const txRecipt = useTransactionReceipt({
-    hash: `0x${txHash}`,
-  });
-  const block = useBlock({ blockNumber: txRecipt.data?.blockNumber });
-  const blockTimestamp = Number(block.data?.timestamp) * 1000;
-  const elapsedHours = Math.floor(
-    (new Date().valueOf() - blockTimestamp) / 1000 / 60 / 60
-  );
+  const { forceInclude } = useArbitrumBridge();
 
   return (
-    <div
-      style={{
-        width: "37.5rem",
-        gap: 24,
-      }}
-      className="flex flex-col"
-    >
+    <div className="flex flex-col gap-6 max-w-xl">
       <div className="flex flex-col items-center">
         <img src={CheckGreenIcon} />
         <div className="text-4xl font-semibold mb-6">Hey! Great Job!</div>
         <div className="text-xl">
-          Your withdrawal request for <b className="font-semibold">{amount}</b>{" "}
-          ETH from <b className="font-semibold">Arbitrum</b> to{" "}
+          Your withdrawal request for{" "}
+          <b className="font-semibold">{formatEther(BigInt(props.tx.amount))}</b> ETH from{" "}
+          <b className="font-semibold">Arbitrum</b> to{" "}
           <b className="font-semibold">Ethereum</b> has been successfully
           initiated
         </div>
-        <div className="text-xl">
-          Your transactionHash is: <b>{txHash}</b>
-        </div>
-        {!Number.isNaN(elapsedHours) && (
-          <div className="text-xl">
-            Elapsed Time: <b>{elapsedHours}/24h</b>
-          </div>
-        )}
       </div>
 
       {/* Steps */}
-      <div className="h-[17.625rem] flex flex-col text-start justify-between bg-gray-100 border border-neutral-200 rounded-2xl overflow-hidden">
-        <div className="flex flex-col grow justify-between p-6 mb-3">
+      <div className="flex flex-col text-start justify-between bg-gray-100 border border-neutral-200 rounded-2xl overflow-hidden">
+        <div className="flex flex-col grow justify-between p-6">
           <Step
             number={1}
             title="Initiate Withdraw"
-            onClick={() => null}
-            done
-          />
+            description="Here your transactions in Arbitrum and the corresponding delayed inbox tx in ethereum"
+            className="pt-2 flex space-x-4"
+          >
+            <a
+              href={`https://sepolia-explorer.arbitrum.io/tx/${props.tx.bridgeHash}`}
+              target="_blank"
+              className="link text-sm flex space-x-1 items-center"
+            >
+              <span>Arbitrum tx </span>
+              <ArrowUpRight className="h-3 w-3" />
+            </a>
+            <a
+              href={`https://sepolia.etherscan.io/tx/${props.tx.delayedInboxHash}`}
+              target="_blank"
+              className="link text-sm flex space-x-1 items-center"
+            >
+              <span>Ethereum delayed inbox tx </span>
+              <ArrowUpRight className="h-3 w-3" />
+            </a>
+          </Step>
+
           <Step
             number={2}
-            title="Waiting Period"
-            onClick={() => null}
-            disabled
-          />
+            title="Force transaction"
+            description="If after 24 hours your arbutrum transaction hasn't been minted, you can push it forward manually with some extra fee in ethereum"
+            className="pt-2"
+          >
+            <button
+              onClick={() => {
+                forceInclude().catch((e) =>
+                  window.alert(
+                    "Something went wrong, please try again. " + e.message
+                  )
+                );
+              }}
+              className="btn btn-sm"
+            >
+              Force include
+            </button>
+          </Step>
+
           <Step
             number={3}
-            title="Force transaction"
-            onClick={() => null}
-            disabled
-          />
-          <Step
-            number={4}
+            className="pt-2"
             title="Claim funds on Ethereum"
-            onClick={() => null}
-            disabled
-          />
+            description="After your transaction has been validated, you can follow the state of it and claim your funds in the arbitrum bridge page by just connecting your wallet."
+          >
+            <a
+              href="https://bridge.arbitrum.io/"
+              target="_blank"
+              className="link text-sm flex space-x-1 items-center"
+            >
+              <span>Claim funds </span>
+              <ArrowUpRight className="h-3 w-3" />
+            </a>
+          </Step>
         </div>
+
         <div className="bg-gray-200 px-4 py-3">
           <div className="text-sm">
             Have questions about this process?{" "}
@@ -101,7 +106,7 @@ export default function TransactionResultCard({
           border: "1px solid black",
           borderRadius: 16,
         }}
-        onClick={onActivityClick}
+        onClick={props.onGoToActivity}
       >
         <img src={BellIcon} />
         Go to my activity
@@ -115,7 +120,7 @@ export default function TransactionResultCard({
           border: "1px solid black",
           borderRadius: 16,
         }}
-        onClick={onReturnClick}
+        onClick={props.onGoHome}
       >
         Return home
       </button>
@@ -126,33 +131,24 @@ export default function TransactionResultCard({
 function Step(props: {
   number: number;
   title: string;
-  onClick?: () => void;
-  action?: string;
-  disabled?: boolean;
-  done?: boolean;
+  description: string;
+  children?: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex space-x-3 items-center">
-        {props.done ? (
-          <div className="h-5 w-5 flex justify-center items-center rounded-full bg-green-500">
-            <CheckIcon className="h-4 w-4 text-white" />
-          </div>
-        ) : (
-          <div className="h-5 w-5 flex justify-center items-center rounded-full border-2 border-gray-800">
-            <span className="text-xs">{props.number}</span>
-          </div>
-        )}
-        <div className={cn("text-lg", props.done && "text-green-500")}>
-          {props.title}
+    <div className="flex items-center justify-between py-3">
+      <div className="flex space-x-3">
+        <div className="h-5 min-w-5 mt-1 flex justify-center items-center rounded-full border-2 border-gray-800">
+          <span className="text-xs">{props.number}</span>
+        </div>
+
+        <div>
+          <h2 className={"text-lg"}>{props.title}</h2>
+          <p className="text-sm">{props.description}</p>
+
+          <div className={props.className}>{props.children}</div>
         </div>
       </div>
-
-      {props.disabled || props.done ? null : (
-        <button onClick={props.onClick} className="btn btn-primary btn-sm">
-          {props.action ?? "Initiate"}
-        </button>
-      )}
     </div>
   );
 }
