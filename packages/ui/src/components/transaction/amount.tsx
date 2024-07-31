@@ -6,58 +6,41 @@ import EthereumIcon from "@/assets/ethereum-icon.svg";
 import WalletIcon from "@/assets/wallet.svg";
 import CustomConnectButton from "@/components/styled/connectButton/customConnectButton";
 import useArbitrumBalance from "@/hooks/useArbitrumBalance";
-import useChain from "@/hooks/useChain";
-import { useChainModal, useConnectModal } from "@rainbow-me/rainbowkit";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 import cn from "classnames";
-import { useForm } from "react-hook-form";
+import { formatEther, parseUnits } from "ethers/lib/utils";
+import { useState } from "react";
 import { useAccount } from "wagmi";
-import { z } from "zod";
-
-const formSchema = z.object({
-  amount: z.number().refine((value) => value > 0, {
-    message: "Must be a greater than 0",
-  }),
-});
-
-type FormType = z.infer<typeof formSchema>;
 
 export default function TransactionAmount({
   onSubmit,
   onBack,
-  amount,
+  amountInWei,
 }: {
   onBack(): void;
-  onSubmit(amount: number): void;
-  amount?: number;
+  onSubmit(amountInWei: string): void;
+  amountInWei?: string;
 }) {
   const { openConnectModal } = useConnectModal();
-  const { openChainModal } = useChainModal();
   const { address } = useAccount();
-  const { isChainValid } = useChain();
   const arbBalance = useArbitrumBalance();
-  const {
-    handleSubmit,
-    watch,
-    register,
-    formState: { isValid },
-    setValue,
-  } = useForm<FormType>({ mode: "onChange" });
+  const [amountEth, setAmountEth] = useState<string>(formatEther(amountInWei ?? "0"))
 
-  const currentAmount = watch("amount", amount ? amount : undefined);
+  function handleSubmit() {
+    if (amountEth.includes("-")) {
+      return window.alert("Only positive values")
+    }
 
-  const onFormSubmit = (values: FormType) => {
-    if (
-      !isValid ||
-      !address ||
-      !isChainValid ||
-      Number(values.amount) > Number(arbBalance)
-    )
-      return;
-    onSubmit(Number(values.amount));
-  };
+    const amount = parseUnits(amountEth, 18)
+
+    if (amount.gt(parseUnits(arbBalance, 18))) {
+      return window.alert("Not enough balance")
+    }
+    onSubmit(amount.toString());
+  }
 
   return (
-    <form onSubmit={handleSubmit(onFormSubmit)} noValidate>
+    <form className="max-w-xl mx-auto" onSubmit={handleSubmit} noValidate>
       <button
         type="button"
         className="flex items-center flex-row gap-3 mb-4"
@@ -87,32 +70,11 @@ export default function TransactionAmount({
         <div className="flex flex-col grow justify-between items-center bg-neutral-50 border border-neutral-200 rounded-2xl p-5 pt-0 h-[21rem]">
           <div className="flex flex-col grow items-center justify-center">
             <input
-              {...register("amount", {
-                value: amount,
-                required: "This field is required",
-                min: {
-                  value: 0.000000001,
-                  message: "Negative numbers are not allowed",
-                },
-              })}
+              value={amountEth}
+              onChange={(e) => setAmountEth(e.target.value)}
               placeholder="0"
               type="number"
               className="bg-neutral-50 text-center text-7xl w-full outline-none remove-arrow font-semibold"
-              onKeyDown={(e) =>
-                ["-", "ArrowUp", "ArrowDown"].includes(e.key) &&
-                e.preventDefault()
-              }
-              onBlur={(e) => {
-                const newNumber = Number(e.target.value);
-                if (newNumber > 0)
-                  setValue("amount", newNumber, {
-                    shouldValidate: true,
-                  });
-                else {
-                  e.target.value = "";
-                  e.preventDefault();
-                }
-              }}
             />
             {/* <div className="flex gap-1 ml-4 text-neutral-400">
               <div className="text-base">
@@ -134,11 +96,7 @@ export default function TransactionAmount({
               <button
                 type="button"
                 className="btn btn-neutral rounded-3xl px-5"
-                onClick={() =>
-                  setValue("amount", Number(arbBalance), {
-                    shouldValidate: true,
-                  })
-                }
+                onClick={() => setAmountEth(arbBalance)}
               >
                 Max
               </button>
@@ -181,32 +139,20 @@ export default function TransactionAmount({
         </div>
         <button
           onClick={(e) => {
+            e.preventDefault();
             if (!address && openConnectModal) {
               openConnectModal();
-              e.preventDefault();
-            } else if (!isChainValid && openChainModal) {
-              openChainModal();
-              e.preventDefault();
-            } else if (currentAmount > Number(arbBalance)) {
-              setValue("amount", Number(arbBalance), { shouldValidate: true });
-              e.preventDefault();
-            }
+            } else handleSubmit();
           }}
           type="submit"
           className={cn(
             "btn btn-primary rounded-3xl disabled:text-neutral-200"
           )}
-          disabled={address && isChainValid && !isValid}
+          disabled={!address}
         >
           {address
-            ? isChainValid
-              ? !currentAmount
-                ? "Enter an amount"
-                : currentAmount > Number(arbBalance)
-                  ? "All i have"
-                  : "Continue"
-              : "Wrong network"
-            : "Connet your wallet to withdraw"}
+            ? "Continue"
+            : "Connect your wallet to withdraw"}
         </button>
       </div>
     </form>

@@ -97,7 +97,7 @@ export default function useArbitrumBridge() {
     } else return null;
   }
 
-  async function assembleWithdraw(from: string, amountInWei: number) {
+  async function assembleWithdraw(from: string, amountInWei: string) {
     // Assemble a generic withdraw transaction
     const arbsysIface = ArbSys__factory.createInterface();
     const calldatal2 = arbsysIface.encodeFunctionData("withdrawEth", [from]);
@@ -109,7 +109,7 @@ export default function useArbitrumBridge() {
     };
   }
 
-  async function initiateWithdraw(amountInWei: number) {
+  async function initiateWithdraw(amountInWei: string) {
     if (!address) {
       throw new Error("No address available");
     }
