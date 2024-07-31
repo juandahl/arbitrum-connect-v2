@@ -47,7 +47,7 @@ export default function useArbitrumBridge() {
 
   async function  getProvider(chainId: number): Promise<ethers.providers.JsonRpcProvider> {
     // TODO: let's use custom providers
-    // await ensureChainId(chainId)
+    await ensureChainId(chainId)
 
     if (!provider) throw new Error("No provider")
     return provider
