@@ -6,7 +6,7 @@ import StepTwoIcon from "@/assets/step-two.svg";
 import cn from "classnames";
 import { useMemo, useState } from "react";
 
-export default function TransactionReviewCard({
+export default function TransactionReview({
   amount,
   onSubmit,
   onBack,
