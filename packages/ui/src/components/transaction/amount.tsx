@@ -21,7 +21,7 @@ const formSchema = z.object({
 
 type FormType = z.infer<typeof formSchema>;
 
-export default function TransactionAmountCard({
+export default function TransactionAmount({
   onSubmit,
   onBack,
   amount,
@@ -32,7 +32,6 @@ export default function TransactionAmountCard({
 }) {
   const { openConnectModal } = useConnectModal();
   const { openChainModal } = useChainModal();
-  // const usdAmountRef = useRef<HTMLInputElement>(null);
   const { address } = useAccount();
   const { isChainValid } = useChain();
   const arbBalance = useArbitrumBalance();
@@ -67,7 +66,7 @@ export default function TransactionAmountCard({
         <img src={ChevronLeftIcon} />
         <div className="font-semibold text-xl">Back</div>
       </button>
-      <div className="flex flex-col gap-6 w-150">
+      <div className="flex flex-col gap-6">
         <div className="flex text-left justify-between items-center bg-neutral-50 border border-neutral-200 rounded-2xl p-5">
           <div className="flex flex-row gap-3 items-start">
             <img src={ArbitrumIcon} />
@@ -125,9 +124,9 @@ export default function TransactionAmountCard({
           <hr className="w-full pb-6" />
           <div className="flex justify-between items-center w-full">
             <div className="flex items-center gap-4">
-              <img src={ArbitrumIcon} />
+              <img src={EthereumIcon} />
               <div className="flex flex-col text-left">
-                <div className="font-bold text-xl">ARB</div>
+                <div className="font-bold text-xl">ETH</div>
                 <div className="text-neutral-500">Balance {arbBalance}</div>
               </div>
             </div>

@@ -4,8 +4,9 @@ import StepOneIcon from "@/assets/step-one.svg";
 import StepThreeIcon from "@/assets/step-three.svg";
 import StepTwoIcon from "@/assets/step-two.svg";
 import cn from "classnames";
+import { useMemo, useState } from "react";
 
-export default function TransactionReviewCard({
+export default function TransactionReview({
   amount,
   onSubmit,
   onBack,
@@ -14,15 +15,18 @@ export default function TransactionReviewCard({
   onSubmit(): void;
   onBack(): void;
 }) {
-  const canSubmit = true;
-  const onContinueClick = () => {
-    onSubmit();
-  };
+  const [approvedAproxFees, setApprovedAproxFees] = useState<boolean>(false);
+  const [approvedSequencerMaySpeedUp, setApprovedSequencerMaySpeedUp] =
+    useState<boolean>(false);
+  const [approvedTime, setApprovedTime] = useState<boolean>(false);
+
+  const canContinue = useMemo(() => {
+    return approvedAproxFees && approvedSequencerMaySpeedUp && approvedTime;
+  }, [approvedAproxFees, approvedSequencerMaySpeedUp, approvedTime]);
 
   return (
     <div
       style={{
-        width: "37.5rem",
         gap: 24,
       }}
       className="flex flex-col"
@@ -31,6 +35,8 @@ export default function TransactionReviewCard({
         <img src={ChevronLeftIcon} />
         <div className="font-semibold text-xl">Review and confirm</div>
       </button>
+
+      {/* amount */}
       <div className="flex items-center justify-between bg-neutral-50 border border-neutral-200 rounded-2xl p-6">
         <div className="flex items-center flex-row gap-3">
           <img src={EthIcon} />
@@ -41,6 +47,8 @@ export default function TransactionReviewCard({
         </div>
         <div className="text-neutral-400">~ - USD</div>
       </div>
+
+      {/* summary */}
       <div className="flex grow justify-between items-center flex-col bg-neutral-50 border border-neutral-200 rounded-2xl p-6 gap-6">
         <div className="bg-[#C2DCFF] p-6 text-sm rounded-2xl p-4">
           You are about to withdraw funds from Arbitrum to Ethereum. This
@@ -77,41 +85,58 @@ export default function TransactionReviewCard({
           </div>
         </div>
       </div>
+
+      {/* terms */}
       <div className="flex grow justify-between flex-col text-start bg-neutral-50 border border-neutral-200 rounded-2xl p-6 gap-6">
         <div className="flex gap-6">
-          <input type="checkbox" />
-          <div>
+          <input
+            type="checkbox"
+            className="cursor-pointer"
+            checked={approvedTime}
+            onChange={() => setApprovedTime((v) => !v)}
+          />
+          <label>
             I understand the entire process will take approximately 24 hours
             before I can claim my funds on Ethereum.
-          </div>
+          </label>
         </div>
         <div className="flex gap-6">
-          <input type="checkbox" />
-          <div>
+          <input
+            type="checkbox"
+            className="cursor-pointer"
+            checked={approvedSequencerMaySpeedUp}
+            onChange={() => setApprovedSequencerMaySpeedUp((v) => !v)}
+          />
+          <label>
             I understand that once the transaction is initiated, if the
             Sequencer becomes operational again the process can be completed
             before that 24-hour period.
-          </div>
+          </label>
         </div>
         <div className="flex gap-6">
-          <input type="checkbox" />
-          <div>
+          <input
+            type="checkbox"
+            className="cursor-pointer"
+            checked={approvedAproxFees}
+            onChange={() => setApprovedAproxFees((v) => !v)}
+          />
+          <label>
             I understand that times and network fees are approximate and may
             change.
-          </div>
+          </label>
         </div>
       </div>
+
+      {/* confirm */}
       <button
         type="button"
-        className={cn("btn btn-primary", {
-          "btn-disabled": false,
-        })}
+        className={cn("btn btn-primary", { "btn-disabled": false })}
         style={{
           border: "1px solid black",
           borderRadius: 16,
         }}
-        disabled={!canSubmit}
-        onClick={onContinueClick}
+        disabled={!canContinue}
+        onClick={onSubmit}
       >
         Confirm Withdrawal
       </button>

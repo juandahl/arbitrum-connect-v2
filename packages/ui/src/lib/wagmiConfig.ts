@@ -1,12 +1,13 @@
 import { connectorsForWallets } from "@rainbow-me/rainbowkit";
 import { metaMaskWallet } from "@rainbow-me/rainbowkit/wallets";
 import { createConfig, http } from "wagmi";
-import { sepolia } from "wagmi/chains";
+import { arbitrumSepolia, sepolia } from "wagmi/chains";
 
-const chains = [sepolia] as const;
+export const chains = [arbitrumSepolia, sepolia] as const;
 const config = createConfig({
   chains,
   transports: {
+    [arbitrumSepolia.id]: http(),
     [sepolia.id]: http(),
   },
   connectors: connectorsForWallets(
@@ -28,4 +29,5 @@ const supportedchains = chains.map((x) => Number(x.id));
 export function isChainSupported(chainId: number) {
   return supportedchains.includes(chainId);
 }
+
 export default config;

@@ -1,45 +1,86 @@
-import useArbitrum from "@/hooks/useArbitrum";
-import useUserWallet from "@/hooks/useUserWallet";
-import LocalStorageService from "@/lib/localStorageService";
-import { ContractTransaction } from "ethers";
+import useArbitrumBridge from "@/hooks/useArbitrum";
 import { useEffect, useState } from "react";
-import TermsModal from "../layout/TermsModal";
-import TransactionAmountCard from "./amount";
+import TermsModal from "../layout/terms-modal";
 import TransactionResultCard from "./result";
-import TransactionReviewCard from "./review";
+import TransactionsActivity from "./activity";
+import TransactionAmount from "./amount";
+import TransactionReview from "./review";
 
 enum STEPS {
   menu,
+  list,
   amount,
   review,
   result,
 }
 
+export interface Transaction {
+  bridgeHash: string;
+  delayedInboxHash: string;
+  amount: string;
+}
+
 export default function Transaction() {
-  const [l1Signer, chain] = useUserWallet();
   const [currentStep, setCurrentStep] = useState(STEPS.menu);
   const [amount, setAmount] = useState<number>(0);
-  const [l2Tx, setL2Tx] = useState<ContractTransaction>();
-  const { submitL2Tx } = useArbitrum();
   const [showModal, setShowModal] = useState(true);
+  const [txHistory, setTxHistory] = useState<Transaction[]>([]);
+  const [currentTx, setCurrentTx] = useState<Transaction | null>();
+  const { initiateWithdraw } = useArbitrumBridge();
+
+  const onReviewSubmit = async () => {
+    initiateWithdraw(1)
+      .then((x) => {
+        console.log("Transaction hashes: ", x);
+
+        const tx: Transaction = {
+          bridgeHash: x.l2Txhash,
+          delayedInboxHash: x.l1Txhash,
+          amount: String(amount), // TODO: temporary until we get amount in wei from input
+        };
+
+        localStorage.setItem(
+          "transactions",
+          JSON.stringify([...txHistory, tx])
+        );
+
+        setCurrentTx(tx);
+        setCurrentStep(STEPS.result);
+      })
+      .catch((e) => {
+        console.error(e);
+        window.alert("Something went wrong, please try again");
+      });
+  };
 
   useEffect(() => {
-    if (l2Tx) new LocalStorageService().setItem("lastTxHash", l2Tx.hash);
-  }, [l2Tx]);
+    setTxHistory(JSON.parse(localStorage.getItem("transactions") ?? "[]"));
+  }, []);
+
   return (
-    <div className="flex flex-col items-center grow justify-center">
+    <div className="py-10 px-4">
       {currentStep === STEPS.menu && (
-        <div className="flex gap-2">
+        <div className="flex gap-2 justify-center">
           <button className="btn" onClick={() => setCurrentStep(STEPS.amount)}>
-            Nueva transacción
+            New Tx
           </button>
-          <button className="btn" onClick={() => setCurrentStep(STEPS.result)}>
-            Ver última transacción
+          <button className="btn" onClick={() => setCurrentStep(STEPS.list)}>
+            Last Txs
           </button>
         </div>
       )}
+      {currentStep === STEPS.list && (
+        <TransactionsActivity
+          txHistory={txHistory}
+          setCurrentTx={(tx) => {
+            setCurrentTx(tx)
+            setCurrentStep(STEPS.result);
+          }}
+          onBack={() => setCurrentStep(STEPS.menu)}
+        />
+      )}
       {currentStep === STEPS.amount && (
-        <TransactionAmountCard
+        <TransactionAmount
           amount={amount}
           onBack={() => {
             setCurrentStep(STEPS.menu);
@@ -51,27 +92,19 @@ export default function Transaction() {
         />
       )}
       {currentStep === STEPS.review && (
-        <TransactionReviewCard
+        <TransactionReview
           amount={amount}
           onBack={() => {
             setCurrentStep(STEPS.amount);
           }}
-          onSubmit={async () => {
-            l1Signer &&
-              chain &&
-              amount &&
-              setL2Tx(await submitL2Tx(l1Signer, chain, { value: amount }));
-            setCurrentStep(STEPS.result);
-          }}
+          onSubmit={onReviewSubmit}
         />
       )}
       {currentStep === STEPS.result && (
         <TransactionResultCard
-          amount={amount}
-          tx={l2Tx}
-          onSubmit={() => {
-            setCurrentStep(STEPS.menu);
-          }}
+          tx={currentTx!}
+          onGoHome={() => setCurrentStep(STEPS.menu)}
+          onGoToActivity={() => setCurrentStep(STEPS.list)}
         />
       )}
       <TermsModal isOpen={showModal} onSubmit={() => setShowModal(false)} />
