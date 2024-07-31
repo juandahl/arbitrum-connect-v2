@@ -81,7 +81,7 @@ export default function Transaction() {
       )}
       {currentStep === STEPS.amount && (
         <TransactionAmount
-          // amount={amount}
+          amountInWei={amountInWei}
           onBack={() => {
             setCurrentStep(STEPS.menu);
           }}

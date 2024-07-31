@@ -8,23 +8,23 @@ import CustomConnectButton from "@/components/styled/connectButton/customConnect
 import useArbitrumBalance from "@/hooks/useArbitrumBalance";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import cn from "classnames";
-import { parseUnits } from "ethers/lib/utils";
+import { formatEther, parseUnits } from "ethers/lib/utils";
 import { useState } from "react";
 import { useAccount } from "wagmi";
 
 export default function TransactionAmount({
   onSubmit,
   onBack,
-  amount,
+  amountInWei,
 }: {
   onBack(): void;
   onSubmit(amountInWei: string): void;
-  amount?: string;
+  amountInWei?: string;
 }) {
   const { openConnectModal } = useConnectModal();
   const { address } = useAccount();
   const arbBalance = useArbitrumBalance();
-  const [amountEth, setAmountEth] = useState<string>(amount ?? "")
+  const [amountEth, setAmountEth] = useState<string>(formatEther(amountInWei ?? "0"))
 
   function handleSubmit() {
     if (amountEth.includes("-")) {
@@ -148,7 +148,7 @@ export default function TransactionAmount({
           className={cn(
             "btn btn-primary rounded-3xl disabled:text-neutral-200"
           )}
-        // disabled={address && isChainValid && !isValid}
+          disabled={!address}
         >
           {address
             ? "Continue"
