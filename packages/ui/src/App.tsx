@@ -3,8 +3,8 @@ import "@rainbow-me/rainbowkit/styles.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { WagmiProvider } from "wagmi";
 import "./App.css";
-// import ArbitrumPoc from "./ArbitrumPoc";
-import ArbitrumPoc from "./ArbitrumPoc";
+import Topbar from "./components/layout/topbar";
+import Transaction from "./components/transaction/transaction";
 import config from "./lib/wagmiConfig";
 
 export default function App() {
@@ -19,9 +19,8 @@ export default function App() {
           theme={lightTheme({ borderRadius: "medium" })}
         >
           <div className="flex flex-col w-full grow min-h-screen  bg-cover text-primary">
-            {/* <Topbar /> */}
-            <ArbitrumPoc />
-            {/* <Transaction /> */}
+            <Topbar />
+            <Transaction />
           </div>
         </RainbowKitProvider>
       </QueryClientProvider>

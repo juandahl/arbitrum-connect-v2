@@ -1,83 +1,204 @@
 import "@rainbow-me/rainbowkit/styles.css";
+import { arbitrum, arbitrumSepolia, mainnet, sepolia } from "wagmi/chains";
 import {
-  arbitrum,
-  arbitrumSepolia,
-  Chain,
-  mainnet,
-  sepolia,
-} from "wagmi/chains";
+  ChildToParentMessageStatus,
+  ChildTransactionReceipt,
+  getArbitrumNetwork,
+  InboxTools,
+} from "@arbitrum/sdk";
+import { ArbSys__factory } from "@arbitrum/sdk/dist/lib/abi/factories/ArbSys__factory";
+import { ARB_SYS_ADDRESS } from "@arbitrum/sdk/dist/lib/dataEntities/constants";
+import { ethers } from "ethers";
+import { useAccount, useSwitchChain } from "wagmi";
+import { useEthersSigner } from "./useEthersSigner";
+import { useEthersProvider } from "./useEthersProvider";
 
-import { getArbitrumNetwork, InboxTools } from "@arbitrum/sdk";
-import { Bridge__factory } from "@arbitrum/sdk/dist/lib/abi/factories/Bridge__factory";
-import { Inbox__factory } from "@arbitrum/sdk/dist/lib/abi/factories/Inbox__factory";
-import { SequencerInbox__factory } from "@arbitrum/sdk/dist/lib/abi/factories/SequencerInbox__factory";
-import { BigNumber } from "@ethersproject/bignumber";
-import { ContractTransaction, Signer, utils } from "ethers";
+enum ClaimStatus {
+  PENDING = "PENDING",
+  CLAIMABLE = "CLAIMABLE",
+  CLAIMED = "CLAIMED",
+}
 
 const l2Networks = {
   [mainnet.id]: arbitrum.id,
   [sepolia.id]: arbitrumSepolia.id,
 } as const;
 
-export default function useArbitrum() {
-  const forceInclude = async (l1Signer: Signer, chain: Chain) => {
-    const l2Network = getArbitrumNetwork(
-      l2Networks[chain.id as keyof typeof l2Networks]
-    );
-    const sequencerInbox = SequencerInbox__factory.connect(
-      l2Network.ethBridge.sequencerInbox,
-      l1Signer
-    );
+export default function useArbitrumBridge() {
+  const parentChainId = sepolia.id;
+  const childNetworkId = l2Networks[parentChainId];
+  const { switchChainAsync } = useSwitchChain();
+  const { chain, address } = useAccount();
+  const signer = useEthersSigner();
+  const provider = useEthersProvider();
 
-    const bridge = Bridge__factory.connect(
-      l2Network.ethBridge.bridge,
-      l1Signer
-    );
+  async function ensureChainId(chainId: number) {
+    if (chain?.id !== chainId) {
+      await switchChainAsync({ chainId });
+    }
+  }
 
-    const inboxTools = new InboxTools(l1Signer, l2Network);
+  async function getSigner(chainId: number): Promise<ethers.providers.JsonRpcSigner> {
+    await ensureChainId(chainId)
 
-    const messagesReadBegin = await bridge.sequencerMessageCount();
+    if (!signer) throw new Error("No signer")
+    return signer;
+  }
+
+  async function  getProvider(chainId: number): Promise<ethers.providers.JsonRpcProvider> {
+    await ensureChainId(chainId)
+
+    if (!provider) throw new Error("No provider")
+    return provider
+  }
+
+  async function sendWithDelayedInbox(tx: any) {
+    const l2Network = await getArbitrumNetwork(childNetworkId);
+    const inboxSdk = new InboxTools(signer!, l2Network);
+
+    // extract l2's tx hash first so we can check if this tx executed on l2 later.
+    const l2Signer = await getSigner(childNetworkId)
+    const l2SignedTx = await inboxSdk.signChildTx(tx, l2Signer);
+    const l2Txhash = l2SignedTx;
+
+    // send tx to l1 delayed inbox
+    await ensureChainId(parentChainId);
+    const resultsL1 = await inboxSdk.sendChildSignedTx(l2SignedTx);
+    if (resultsL1 == null) {
+      throw new Error(`Failed to send tx to l1 delayed inbox!`);
+    }
+    const inboxRec = await resultsL1.wait();
+
+    return { l2Txhash, l1Txhash: inboxRec.transactionHash };
+  }
+
+  async function isForceIncludePossible() {
+    const l1Wallet = await getSigner(parentChainId);
+    const l2Network = getArbitrumNetwork(childNetworkId);
+    const inboxSdk = new InboxTools(l1Wallet, l2Network);
+
+    return !!(await inboxSdk.getForceIncludableEvent());
+  }
+
+  async function forceInclude() {
+    const l1Wallet = await getSigner(parentChainId);
+    const l2Network = getArbitrumNetwork(childNetworkId);
+    const inboxTools = new InboxTools(l1Wallet, l2Network);
 
     const forceInclusionTx = await inboxTools.forceInclude();
-    console.log("forceInclusionTx: ", forceInclusionTx);
 
     if (forceInclusionTx) {
-      const result2 = await forceInclusionTx.wait();
-      console.log("forceInclusionTx await: ", result2);
+      return await forceInclusionTx.wait();
+    } else return null;
+  }
+
+  async function assembleWithdraw(from: string, amountInWei: number) {
+    // Assemble a generic withdraw transaction
+    const arbsysIface = ArbSys__factory.createInterface();
+    const calldatal2 = arbsysIface.encodeFunctionData("withdrawEth", [from]);
+
+    return {
+      data: calldatal2,
+      to: ARB_SYS_ADDRESS,
+      value: amountInWei,
+    };
+  }
+
+  async function initiateWithdraw(amountInWei: number) {
+    if (!address) {
+      throw new Error("No address available");
     }
 
-    const messagesReadEnd = await sequencerInbox.totalDelayedMessagesRead();
-
-    console.log(
-      `Messages before: ${messagesReadBegin.toString()} / after: ${messagesReadEnd.toString()}`
+    return await sendWithDelayedInbox(
+      await assembleWithdraw(address, amountInWei)
     );
-  };
+  }
 
-  const submitL2Tx = async (
-    l1Signer: Signer,
-    chain: Chain,
-    tx: {
-      value: number;
-      data?: string;
-      nonce?: number;
-      gasPriceBid?: BigNumber;
-      gasLimit?: BigNumber;
+  async function getClaimStatus(txnHash: string): Promise<ClaimStatus> {
+    if (!txnHash) {
+      throw new Error(
+        "Provide a transaction hash of an L2 transaction that sends an L2 to L1 message"
+      );
     }
-  ): Promise<ContractTransaction> => {
-    const l2Network = getArbitrumNetwork(
-      l2Networks[chain.id as keyof typeof l2Networks]
-    );
-    const lala = await l1Signer.getAddress();
-    console.log("signer address: ", lala);
-    const inbox = Inbox__factory.connect(l2Network.ethBridge.inbox, l1Signer);
-    return await inbox.sendUnsignedTransaction(
-      tx.gasLimit || BigNumber.from(100000),
-      tx.gasPriceBid || BigNumber.from(21000000000),
-      tx.nonce || 0,
-      await l1Signer.getAddress(),
-      utils.parseEther(tx.value.toString()),
-      tx.data || "0x"
-    );
+    if (!txnHash.startsWith("0x") || txnHash.trim().length != 66) {
+      throw new Error(`Hmm, ${txnHash} doesn't look like a txn hash...`);
+    }
+
+    const l2Provider = await getProvider(childNetworkId);
+    const l1Wallet = await getSigner(parentChainId);
+
+    // First, let's find the Arbitrum txn from the txn hash provided
+    const receipt = await l2Provider.getTransactionReceipt(txnHash);
+    if (receipt === null) {
+      return ClaimStatus.PENDING;
+    }
+    const l2Receipt = new ChildTransactionReceipt(receipt);
+
+    // In principle, a single transaction could trigger any number of outgoing messages; the common case will be there's only one.
+    // We assume there's only one / just grad the first one.
+    const messages = await l2Receipt.getChildToParentMessages(l1Wallet);
+    const l2ToL1Msg = messages[0];
+
+    // Check if already executed
+    if (
+      (await l2ToL1Msg.status(l2Provider)) ==
+      ChildToParentMessageStatus.EXECUTED
+    ) {
+      return ClaimStatus.CLAIMED;
+    }
+
+    // block number of the first block where the message can be executed or null if it already can be executed or has been executed
+    const block = await l2ToL1Msg.getFirstExecutableBlock(l2Provider);
+    if (block === null) {
+      return ClaimStatus.CLAIMABLE;
+    } else {
+      return ClaimStatus.PENDING;
+    }
+  }
+
+  async function claimFunds(txnHash: string) {
+    if (!txnHash) {
+      throw new Error(
+        "Provide a transaction hash of an L2 transaction that sends an L2 to L1 message"
+      );
+    }
+    if (!txnHash.startsWith("0x") || txnHash.trim().length != 66) {
+      throw new Error(`Hmm, ${txnHash} doesn't look like a txn hash...`);
+    }
+
+    const l2Provider = await getProvider(childNetworkId);
+    const l1Wallet = await getSigner(parentChainId);
+
+    // First, let's find the Arbitrum txn from the txn hash provided
+    const receipt = await l2Provider.getTransactionReceipt(txnHash);
+    const l2Receipt = new ChildTransactionReceipt(receipt);
+
+    // In principle, a single transaction could trigger any number of outgoing messages; the common case will be there's only one.
+    // We assume there's only one / just grad the first one.
+    const messages = await l2Receipt.getChildToParentMessages(l1Wallet);
+    const l2ToL1Msg = messages[0];
+
+    // Check if already executed
+    if (
+      (await l2ToL1Msg.status(l2Provider)) ==
+      ChildToParentMessageStatus.EXECUTED
+    ) {
+      return null;
+    }
+
+    // Now that its confirmed and not executed, we can execute our message in its outbox entry.
+    const res = await l2ToL1Msg.execute(l2Provider);
+    const rec = await res.wait();
+
+    console.log("Done! Your transaction is executed", rec);
+    return rec;
+  }
+
+  return {
+    isForceIncludePossible,
+    forceInclude,
+    initiateWithdraw,
+    getClaimStatus,
+    claimFunds,
   };
-  return { forceInclude, submitL2Tx } as const;
 }
