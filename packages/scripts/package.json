@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "postinstall": "patch-package"
   },
   "author": "",
   "license": "ISC",
@@ -17,6 +17,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "patch-package": "^8.0.0",
     "ts-node": "^10.9.2"
   }
 }
