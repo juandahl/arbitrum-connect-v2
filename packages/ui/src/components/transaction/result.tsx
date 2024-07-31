@@ -14,7 +14,7 @@ export default function TransactionResultCard(props: {
   const { forceInclude } = useArbitrumBridge();
 
   return (
-    <div className="flex flex-col gap-6 max-w-xl">
+    <div className="flex flex-col gap-6 max-w-xl mx-auto">
       <div className="flex flex-col items-center">
         <img src={CheckGreenIcon} />
         <div className="text-4xl font-semibold mb-6">Hey! Great Job!</div>

@@ -7,7 +7,7 @@ export default function TransactionsActivity(props: {
 }) {
   return (
     <>
-      <div className="flex flex-col max-w-xl">
+      <div className="flex flex-col max-w-xl mx-auto">
         <div className="flex justify-self-start text-xl font-semibold mb-8">
           My activity
         </div>
@@ -15,7 +15,7 @@ export default function TransactionsActivity(props: {
           <ul>
             {props.txHistory.map((x) => (
               <li key={x.bridgeHash} className="list-disc ml-4">
-                {x.bridgeHash}{" "}
+                {shortenAddress(x.bridgeHash)}{" "}
                 <button className="link" onClick={() => props.setCurrentTx(x)}>
                   View detail
                 </button>
@@ -51,4 +51,9 @@ export default function TransactionsActivity(props: {
       </div>
     </>
   );
+}
+
+
+function shortenAddress(add: string) {
+  return add.slice(0, 4) + "..." + add.slice(add.length - 4)
 }
