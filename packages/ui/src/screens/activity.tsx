@@ -1,12 +1,11 @@
 import { useState, useEffect } from "react";
 import { Transaction, transactionsStorageService } from "@/lib/transactions";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import TopBarLayout from "@/layouts/topbar";
 import { ChevronLeftIcon } from "lucide-react";
 import { shortenAddress } from "@/lib/shorten-address";
 
 export default function ActivityScreen() {
-  const navigate = useNavigate();
   const [txHistory, setTxHistory] = useState<Transaction[]>([]);
 
   useEffect(() => {
