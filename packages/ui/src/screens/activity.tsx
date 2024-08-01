@@ -1,31 +1,41 @@
-import { useState, useEffect  } from "react";
+import { useState, useEffect } from "react";
 import { Transaction, transactionsStorageService } from "@/lib/transactions";
+import { Link, useNavigate } from "react-router-dom";
+import TopBarLayout from "@/layouts/topbar";
+import { ChevronLeftIcon } from "lucide-react";
+import { shortenAddress } from "@/lib/shorten-address";
 
-export default function TransactionsActivity(props: {
-  setCurrentTx: (tx: Transaction) => unknown;
-  onBack(): void;
-}) {
-  const [txHistory, setTxHistory] = useState<Transaction[]>([])
+export default function ActivityScreen() {
+  const navigate = useNavigate();
+  const [txHistory, setTxHistory] = useState<Transaction[]>([]);
 
   useEffect(() => {
-    setTxHistory(transactionsStorageService.getTransactions())
+    setTxHistory(transactionsStorageService.getAll());
   }, []);
 
-
   return (
-    <>
+    <TopBarLayout>
       <div className="flex flex-col max-w-xl mx-auto">
-        <div className="flex justify-self-start text-xl font-semibold mb-8">
-          My activity
+        <div className="flex space-x-3 items-center mb-8">
+          <Link to="/">
+            <ChevronLeftIcon className="h-5 w-5" />
+          </Link>
+          <h1 className="flex text-xl font-semibold">
+            My activity
+          </h1>
         </div>
+
         <div className="flex">
           <ul>
             {txHistory.map((x) => (
               <li key={x.bridgeHash} className="list-disc ml-4">
                 {shortenAddress(x.bridgeHash)}{" "}
-                <button className="link" onClick={() => props.setCurrentTx(x)}>
+                <Link
+                  className="link"
+                  to={`/activity/${x.bridgeHash}`}
+                >
                   View detail
-                </button>
+                </Link>
               </li>
             ))}
           </ul>
@@ -51,16 +61,8 @@ export default function TransactionsActivity(props: {
             ))}
           </ul> */}
         </div>
-
-        <button className="btn mt-10" onClick={props.onBack}>
-          Go back
-        </button>
       </div>
-    </>
+    </TopBarLayout>
   );
 }
 
-
-function shortenAddress(add: string) {
-  return add.slice(0, 4) + "..." + add.slice(add.length - 4)
-}

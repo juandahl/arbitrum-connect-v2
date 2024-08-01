@@ -8,16 +8,18 @@ export interface Transaction {
 export class TransactionsStorageService {
   constructor(private readonly storageKey: string) { }
 
-  getTransactions(): Transaction[] {
+  getAll(): Transaction[] {
     return JSON.parse(localStorage.getItem(this.storageKey) ?? "[]")
   }
 
-  pushTransaction(tx: Transaction): void {
-    const txs = this.getTransactions()
+  getByBridgeHash(hash: string): Transaction | null {
+    return this.getAll().find(t => t.bridgeHash.toLowerCase() === hash.toLowerCase()) ?? null
+  }
 
+  create(tx: Transaction): void {
     localStorage.setItem(
       this.storageKey,
-      JSON.stringify([...txs, tx])
+      JSON.stringify([...this.getAll(), tx])
     );
   }
 
