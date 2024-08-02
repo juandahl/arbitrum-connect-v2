@@ -7,6 +7,9 @@ import { formatEther } from "viem";
 import { transactionsStorageService } from "@/lib/transactions";
 import { useNavigate, useParams } from "react-router-dom";
 import TopBarLayout from "@/layouts/topbar";
+import { AddToCalendarButton } from "@/components/add-to-calendar";
+import { GoogleCalendarIcon } from "@/components/icons";
+import { ONE_HOUR } from "@/lib/add-to-calendar";
 
 export default function TransactionDetailScreen() {
   const { tx } = useParams();
@@ -25,7 +28,7 @@ export default function TransactionDetailScreen() {
         <div className="flex flex-col items-center">
           <img src={CheckGreenIcon} />
           <div className="text-4xl font-semibold mb-6">Hey! Great Job!</div>
-          <div className="text-xl">
+          <div className="md:text-xl">
             Your withdrawal request for{" "}
             <b className="font-semibold">
               {formatEther(BigInt(transaction.amount))}
@@ -38,12 +41,12 @@ export default function TransactionDetailScreen() {
 
         {/* Steps */}
         <div className="flex flex-col text-start justify-between bg-gray-100 border border-neutral-200 rounded-2xl overflow-hidden">
-          <div className="flex flex-col grow justify-between p-6">
+          <div className="flex flex-col grow justify-between md:p-6 p-4 space-y-6">
             <Step
               number={1}
               title="Initiate Withdraw"
               description="Here your transactions in Arbitrum and the corresponding delayed inbox tx in ethereum"
-              className="pt-2 flex space-x-4"
+              className="pt-2 md:flex md:space-x-4"
             >
               <a
                 href={`https://sepolia.arbiscan.io/tx/${transaction.bridgeHash}`}
@@ -66,8 +69,8 @@ export default function TransactionDetailScreen() {
             <Step
               number={2}
               title="Force transaction"
-              description="If after 24 hours your arbutrum transaction hasn't been minted, you can push it forward manually with some extra fee in ethereum"
-              className="pt-2"
+              description="If after 24 hours your Arbitrum transaction hasn't been mined, you can push it forward manually with some extra fee in ethereum"
+              className="pt-2 space-y-2 md:space-y-0 md:space-x-2 flex items-start flex-col md:flex-row md:items-center"
             >
               <button
                 onClick={() => {
@@ -81,6 +84,18 @@ export default function TransactionDetailScreen() {
               >
                 Force include
               </button>
+              <AddToCalendarButton
+                className="btn btn-sm space-x-1"
+                event={{
+                  title: "Push forward your transaction",
+                  description: "Wait is over, if your transaction hasn't go through by now, you can force include it from Arbitrum connect.",
+                  startDate: new Date((transaction.timestamp ?? Date.now()) + 24 * ONE_HOUR),
+                  endDate: new Date((transaction.timestamp ?? Date.now()) + 25 * ONE_HOUR),
+                }}
+              >
+                <GoogleCalendarIcon className="h-4 w-4" />
+                <span>Create reminder</span>
+              </AddToCalendarButton>
             </Step>
 
             <Step
@@ -144,7 +159,7 @@ function Step(props: {
   className?: string;
 }) {
   return (
-    <div className="flex items-center justify-between py-3">
+    <div className="flex items-center justify-between">
       <div className="flex space-x-3">
         <div className="h-5 min-w-5 mt-1 flex justify-center items-center rounded-full border-2 border-gray-800">
           <span className="text-xs">{props.number}</span>
