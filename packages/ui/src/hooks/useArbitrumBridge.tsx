@@ -45,16 +45,6 @@ export default function useArbitrumBridge() {
     return signer;
   }
 
-  async function getProvider(
-    chainId: number
-  ): Promise<ethers.providers.JsonRpcProvider> {
-    // TODO: let's use custom providers
-    await ensureChainId(chainId);
-
-    if (!provider) throw new Error("No provider");
-    return provider;
-  }
-
   async function sendWithDelayedInbox(tx: any) {
     const l2Network = await getArbitrumNetwork(childNetworkId);
     const inboxSdk = new InboxTools(signer!, l2Network);
