@@ -5,37 +5,39 @@ import StepThreeIcon from "@/assets/step-three.svg";
 import StepTwoIcon from "@/assets/step-two.svg";
 import useArbitrumBridge from "@/hooks/useArbitrumBridge";
 import { Transaction, transactionsStorageService } from "@/lib/transactions";
-import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import cn from "classnames";
 import { BigNumber } from "ethers";
 import { formatEther } from "ethers/lib/utils";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
-type SearchParams = {
+interface SearchParams {
   amount: string;
-};
+}
 
-export const Route = createFileRoute("/review")({
-  component: ReviewScreen,
-  validateSearch: (search: Record<string, unknown>): SearchParams => {
+export const Route = createFileRoute("/withdraw")({
+  component: WithdrawScreen,
+  validateSearch: (search): SearchParams => {
     try {
-      const amount = BigNumber.from(search.amount);
-      if (amount.lte("0")) {
-        throw new Error("Amount below 0");
-      }
-
-      return {
-        amount: amount.toString(),
-      };
+      if (!search.amount) throw new Error("Amount is required");
+      return { amount: BigNumber.from((search.amount as string).replace(/"/g, '')).toString() ?? "0" };
     } catch (e) {
-      throw redirect({ to: "/" });
+      console.log("e", e)
+      return { amount: "0" };
     }
   },
 });
 
-function ReviewScreen() {
+function WithdrawScreen() {
   const navigate = useNavigate();
   const { amount: amountInWei } = Route.useSearch();
+
+  useEffect(() => {
+    if (BigNumber.from(amountInWei).lte(0)) {
+      console.log("amountInWei", amountInWei);
+      navigate({ to: "/" });
+    }
+  }, [amountInWei]);
 
   const [approvedAproxFees, setApprovedAproxFees] = useState<boolean>(false);
   const [approvedSequencerMaySpeedUp, setApprovedSequencerMaySpeedUp] =
@@ -47,12 +49,12 @@ function ReviewScreen() {
 
   function onContinue() {
     setLoading(true);
-    initiateWithdraw(amountInWei!)
+    initiateWithdraw(String(amountInWei))
       .then((x) => {
         const tx: Transaction = {
           bridgeHash: x.l2Txhash,
           delayedInboxHash: x.l1Txhash,
-          amount: amountInWei as string,
+          amount: String(amountInWei),
           timestamp: Date.now(),
         };
         transactionsStorageService.create(tx);
@@ -84,9 +86,10 @@ function ReviewScreen() {
         <div className="flex items-center gap-3">
           <img src={EthIcon} />
           <div className="flex items-end space-x-1">
-            <div className="text-2xl md:text-4xl font-bold">{`${formatEther(
-              amountInWei
-            )}`}</div>
+            <div
+              data-test-id="withdraw-amount"
+              className="text-2xl md:text-4xl font-bold"
+            >{`${formatEther(amountInWei)}`}</div>
             <div className="ml-0.5 font-bold">ETH</div>
           </div>
         </div>
@@ -139,6 +142,7 @@ function ReviewScreen() {
       <div className="flex grow justify-between flex-col text-start bg-neutral-50 border border-neutral-200 rounded-2xl p-4 md:p-6 gap-6">
         <div className="flex gap-4 md:gap-6">
           <input
+            id="terms-time"
             type="checkbox"
             className="cursor-pointer"
             checked={approvedTime}
@@ -151,6 +155,7 @@ function ReviewScreen() {
         </div>
         <div className="flex gap-4 md:gap-6">
           <input
+            id="terms-sequencer"
             type="checkbox"
             className="cursor-pointer"
             checked={approvedSequencerMaySpeedUp}
@@ -164,6 +169,7 @@ function ReviewScreen() {
         </div>
         <div className="flex gap-4 md:gap-6">
           <input
+            id="terms-fees"
             type="checkbox"
             className="cursor-pointer"
             checked={approvedAproxFees}
