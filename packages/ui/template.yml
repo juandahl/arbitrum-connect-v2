@@ -139,3 +139,6 @@ Outputs:
   Url:
     Description: Public URL
     Value: !Sub ${S3Bucket}
+  CloudFrontUrl:
+    Description: "CloudFront Distribution Url"
+    Value: !GetAtt CloudFrontDistribution.DomainName
