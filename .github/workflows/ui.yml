@@ -8,17 +8,11 @@ on:
     paths:
       - "packages/ui/**"
       - "!packages/ui/template.yml"
-  workflow_dispatch:
-    inputs:
-      environment:
-        required: true
-        type: environment
 
 jobs:
   Deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: ${{ inputs.environment }}
+    environment: ${{ github.ref == 'refs/heads/main' && 'Production' || github.ref == 'refs/heads/develop' && 'Staging'}}
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
