@@ -11,8 +11,7 @@ on:
 jobs:
   Deploy:
     runs-on: ubuntu-latest
-    environment:
-      name: ${{ github.ref == 'refs/heads/main' && 'production' || github.ref == 'refs/heads/staging' && 'staging'}}
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || github.ref == 'refs/heads/staging' && 'staging'}}
 
     steps:
       - uses: actions/checkout@v4
