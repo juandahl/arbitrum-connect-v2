@@ -7,11 +7,6 @@ on:
       - develop
     paths:
       - "**/template.yml"
-  workflow_dispatch:
-    inputs:
-      environment:
-        required: true
-        type: environment
 
 jobs:
   Deploy:
