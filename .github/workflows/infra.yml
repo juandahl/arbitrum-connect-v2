@@ -7,10 +7,17 @@ on:
       - develop
     paths:
       - "**/template.yml"
+  workflow_dispatch:
+    inputs:
+      environment:
+        required: true
+        type: environment
 
 jobs:
   Deploy:
     runs-on: ubuntu-latest
+    environment:
+      name: ${{ inputs.environment }}
     steps:
       - uses: actions/checkout@v4
       - name: Configure AWS credentials
