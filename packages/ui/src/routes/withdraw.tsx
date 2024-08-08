@@ -4,6 +4,7 @@ import StepOneIcon from "@/assets/step-one.svg";
 import StepThreeIcon from "@/assets/step-three.svg";
 import StepTwoIcon from "@/assets/step-two.svg";
 import useArbitrumBridge from "@/hooks/useArbitrumBridge";
+import { getL1TxPrice, getL1TxPriceFromGasLimit, getL2TxPrice, L1ClaimTxGasLimit, MockL1SendL2MessageTx, MockL2WithdrawTx } from "@/lib/get-tx-price";
 import { Transaction, transactionsStorageService } from "@/lib/transactions";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import cn from "classnames";
@@ -44,7 +45,9 @@ function WithdrawScreen() {
     useState<boolean>(false);
   const [approvedTime, setApprovedTime] = useState<boolean>(false);
   const [loading, setLoading] = useState(false);
-
+  const [withdrawPrice, setWithdrawPrice] = useState<string>("");
+  const [_, setConfirmWithdrawPrice] = useState<string>("");
+  const [claimPrice, setClaimPrice] = useState<string>("");
   const { initiateWithdraw } = useArbitrumBridge();
 
   function onContinue() {
@@ -70,6 +73,12 @@ function WithdrawScreen() {
   const canContinue = useMemo(() => {
     return approvedAproxFees && approvedSequencerMaySpeedUp && approvedTime;
   }, [approvedAproxFees, approvedSequencerMaySpeedUp, approvedTime]);
+
+  useEffect(() => {
+    getL1TxPrice(MockL1SendL2MessageTx).then(setConfirmWithdrawPrice);
+    getL1TxPriceFromGasLimit(L1ClaimTxGasLimit).then(setClaimPrice);
+    getL2TxPrice(MockL2WithdrawTx).then(setWithdrawPrice);
+  }, []);
 
   return (
     <div className="flex flex-col max-w-xl mx-auto gap-6">
@@ -111,7 +120,7 @@ function WithdrawScreen() {
           <div className="flex flex-col md:flex-row md:justify-between w-full">
             <span className="block text-left">Initiate Withdraw</span>
             <div className="flex items-center flex-row gap-2">
-              <span className="text-sm">0.012 ETH</span>
+              <span className="text-sm">{withdrawPrice.slice(0, 10)} ETH</span>
               <span className="text-neutral-400 text-sm">~ $-</span>
             </div>
           </div>
@@ -131,7 +140,7 @@ function WithdrawScreen() {
             <p className="text-left">Claim funds on Ethereum</p>
 
             <div className="flex items-center flex-row just gap-3">
-              <span className="text-sm">0.026 ETH</span>
+              <span className="text-sm">{claimPrice.slice(0, 10)} ETH</span>
               <span className="text-neutral-400 text-sm">~ $-</span>
             </div>
           </div>
