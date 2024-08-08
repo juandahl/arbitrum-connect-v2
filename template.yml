@@ -32,6 +32,3 @@ Outputs:
   UIUrl:
     Description: UI public access URL
     Value: !GetAtt UI.Outputs.Url
-  CloudFrontDistributionId:
-    Description: "CloudFront Distribution ID from the UI stack"
-    Value: !GetAtt UI.Outputs.CloudFrontDistributionId
