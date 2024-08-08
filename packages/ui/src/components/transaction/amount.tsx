@@ -28,6 +28,7 @@ export default function TransactionAmount({
     formatEther(amountInWei ?? "0")
   );
 
+
   function handleSubmit() {
     if (amountEth.includes("-")) {
       return window.alert("Only positive values");
