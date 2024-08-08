@@ -1,12 +1,13 @@
-name: prod-ui
+name: ui
 
 on:
   push:
     branches:
       - main
-    paths-ignore:
-      - "**/template.yml"
-      - "**/template.yaml"
+      - develop
+    paths:
+      - "packages/ui/**"
+      - "!packages/ui/template.yml"
 
 jobs:
   Deploy:
