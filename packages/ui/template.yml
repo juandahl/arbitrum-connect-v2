@@ -139,4 +139,3 @@ Outputs:
   Url:
     Description: Public URL
     Value: !Sub ${S3Bucket}
-    
