@@ -41,6 +41,7 @@ export default function TransactionAmount({
     onSubmit(amount.toString());
   }
 
+
   return (
     <form className="max-w-xl mx-auto" onSubmit={handleSubmit} noValidate>
       <button
