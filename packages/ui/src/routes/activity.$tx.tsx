@@ -1,7 +1,7 @@
 import { AddToCalendarButton } from "@/components/add-to-calendar";
 import { GoogleCalendarIcon } from "@/components/icons";
+import { StatusStep } from "@/components/transaction/status-step";
 import useArbitrumBridge, { ClaimStatus } from "@/hooks/useArbitrumBridge";
-import { ONE_HOUR } from "@/lib/add-to-calendar";
 import { transactionsStorageService } from "@/lib/transactions";
 import { getL1BlockTimestamp } from "@/lib/tx-actions";
 import {
@@ -11,13 +11,14 @@ import {
   useNavigate,
 } from "@tanstack/react-router";
 import cn from "classnames";
+import { addDays, addHours, intervalToDuration } from "date-fns";
 import { ArrowUpRight, Bell, CircleCheck } from 'lucide-react';
 import { useEffect, useState } from "react";
-import { formatEther } from "viem";
+import { Address, formatEther } from "viem";
 
 export const Route = createFileRoute("/activity/$tx")({
   loader: async ({ params }) => {
-    const tx = transactionsStorageService.getByBridgeHash((params.tx) as `0x${string}` ?? "0x");
+    const tx = transactionsStorageService.getByBridgeHash((params.tx as Address) ?? "0x");
     if (!tx) throw notFound();
     return tx;
   },
@@ -37,11 +38,14 @@ function PostComponent() {
   const [canConfirm, setCanConfirm] = useState<boolean>();
   const [transaction, setTransaction] = useState(txParam);
   const [remainingHours, setRemainingHours] = useState<number>();
+  const [isConfirming, setIsConfirming] = useState<boolean>(false);
+
 
   const enableForce = !remainingHours && canForce && claimStatus && claimStatus === ClaimStatus.PENDING;
 
   function onConfirm() {
     if (!signer) return;
+    setIsConfirming(true);
     pushChildTxToParent(transaction.bridgeHash, signer)
       .then(inboxTx => {
         const updatedTx = { ...transaction, delayedInboxHash: inboxTx };
@@ -75,11 +79,7 @@ function PostComponent() {
 
   useEffect(() => {
     if (!signer || canConfirm === undefined) return;
-    if (canConfirm) {
-      setClaimStatus(ClaimStatus.PENDING)
-      setCanForce(false);
-    }
-    else if (!claimStatus)
+    if (transaction.delayedInboxHash && !claimStatus)
       getClaimStatus(transaction.bridgeHash).then((x) => {
         setClaimStatus(x);
         if (x === ClaimStatus.PENDING) {
@@ -96,11 +96,14 @@ function PostComponent() {
   useEffect(() => {
     setCanConfirm(!transaction.delayedInboxHash)
     transaction.delayedInboxHash && getL1BlockTimestamp(transaction.delayedInboxHash).then(txTimestamp => {
-      const remaining = Math.floor(((txTimestamp + 24 * ONE_HOUR) - new Date().valueOf()) / ONE_HOUR);
-      setRemainingHours(remaining < 0 ? 0 : remaining);
+      const dueDate = addDays(txTimestamp, 1);
+      const remainingHours = intervalToDuration({ start: Date.now(), end: dueDate }).hours;
+      if (remainingHours === undefined) throw new Error("unexpected error calculating due time")
+      setRemainingHours(remainingHours < 0 ? 0 : remainingHours);
     })
   }, [transaction.delayedInboxHash])
 
+  console.log("claimStatus: ", claimStatus);
   return (
     <div className="flex flex-col gap-6 max-w-xl mx-auto">
       <div className="flex flex-col items-center">
@@ -119,14 +122,13 @@ function PostComponent() {
 
       {/* Steps */}
       <div className="flex flex-col text-start justify-between bg-gray-100 border border-neutral-200 rounded-2xl overflow-hidden">
-        <div className="flex flex-col grow justify-between md:p-6 p-4 space-y-6">
-          <Step
+        <div className="flex flex-col grow justify-between md:p-6">
+          <StatusStep
             done
             number={1}
             title="Initiate Withdraw"
             description="Your withdraw transaction in Arbitrum"
-            className="pt-2 md:flex md:space-x-4"
-          >
+            className="pt-2 md:flex md:space-x-4 mb-4">
             <a
               href={`https://sepolia.arbiscan.io/tx/${transaction.bridgeHash}`}
               target="_blank"
@@ -135,56 +137,40 @@ function PostComponent() {
               <span>Arbitrum tx </span>
               <ArrowUpRight className="h-3 w-3" />
             </a>
-          </Step>
-
-          <Step
-            done={canConfirm !== undefined && !canConfirm}
-            loading={canConfirm === undefined}
+          </StatusStep>
+          <StatusStep
+            done={!!transaction.delayedInboxHash}
+            active={!transaction.delayedInboxHash && canConfirm !== undefined}
             number={2}
             title="Confirm Withdraw"
             description="Send the Arbitrum withdraw transaction through the delayed inbox"
-            className="pt-2 space-y-2 md:space-y-0 md:space-x-2 flex items-start flex-col md:flex-row md:items-center"
+            className="pt-2 space-y-2 md:space-y-0 md:space-x-2 mb-4 flex items-start flex-col md:flex-row md:items-center"
           >
-            {canConfirm &&
-              <>
-                <button
-                  onClick={onConfirm}
-                  className="btn btn-primary btn-sm"
-                >
-                  Confirm
-                </button>
-              </>
+            {canConfirm && !isConfirming &&
+              <button
+                onClick={onConfirm}
+                className="btn btn-primary btn-sm"
+              >
+                Confirm
+              </button>
             }
             {!canConfirm && <><a
               href={`https://sepolia.etherscan.io/tx/${transaction.delayedInboxHash}`}
               target="_blank"
-              className="link text-sm flex space-x-1 items-center"
+              className="link text-sm flex space-x-1 items-center "
             >
               <span>Ethereum delayed inbox tx </span>
               <ArrowUpRight className="h-3 w-3" />
             </a>
-              {!canForce && claimStatus === ClaimStatus.PENDING &&
-                <AddToCalendarButton
-                  className="btn btn-sm space-x-1"
-                  event={{
-                    title: "Push forward your transaction",
-                    description: "Wait is over, if your transaction hasn't go through by now, you can force include it from Arbitrum connect.",
-                    startDate: new Date((transaction.timestamp) + 24 * ONE_HOUR),
-                    endDate: new Date((transaction.timestamp) + 25 * ONE_HOUR),
-                  }}
-                >
-                  <GoogleCalendarIcon className="h-4 w-4" />
-                  <span>Create reminder</span>
-                </AddToCalendarButton>
-              }</>}
-          </Step>
-          <Step
-            done={(claimStatus === ClaimStatus.CLAIMED && !canForce) || claimStatus === ClaimStatus.CLAIMABLE}
-            loading={enableForce === undefined}
+            </>}
+          </StatusStep>
+          <StatusStep
+            done={claimStatus && [ClaimStatus.CLAIMED, ClaimStatus.CLAIMABLE].includes(claimStatus)}
+            active={transaction.delayedInboxHash && claimStatus === ClaimStatus.PENDING}
             number={3}
             title="Force transaction"
             description="If after 24 hours your Arbitrum transaction hasn't been mined, you can push it forward manually with some extra fee in ethereum"
-            className="pt-2 space-y-2 md:space-y-0 md:space-x-2 flex items-start flex-col md:flex-row md:items-center"
+            className="pt-2 space-y-2 md:space-y-0 md:space-x-2 mb-4 flex items-start flex-col md:flex-row md:items-center"
           >
             {enableForce &&
               <>
@@ -196,14 +182,28 @@ function PostComponent() {
                 </button>
               </>
             }
-            {!canConfirm && claimStatus === ClaimStatus.PENDING && remainingHours !== undefined && (<a className="text-sm font-semibold">
-              <span>{remainingHours} / 24 hs</span>
-            </a>)}
-          </Step>
+            {claimStatus === ClaimStatus.PENDING && remainingHours !== undefined && (<>
+              <a className="text-sm font-semibold">
+                {remainingHours} / 24 hs
+              </a>
+              <AddToCalendarButton
+                className="btn btn-sm space-x-1"
+                event={{
+                  title: "Push forward your transaction",
+                  description: "Wait is over, if your transaction hasn't go through by now, you can force include it from Arbitrum connect.",
+                  startDate: addHours(transaction.timestamp, 24),
+                  endDate: addHours(transaction.timestamp, 25),
+                }}
+              >
+                <GoogleCalendarIcon className="h-4 w-4" />
+                <span>Create reminder</span>
+              </AddToCalendarButton>
+            </>)}
+          </StatusStep>
 
-          <Step
+          <StatusStep
             done={claimStatus === ClaimStatus.CLAIMED}
-            loading={claimStatus === undefined}
+            active={transaction.delayedInboxHash && (claimStatus === undefined || claimStatus === ClaimStatus.CLAIMABLE)}
             number={4}
             className="pt-2"
             title="Claim funds on Ethereum"
@@ -219,17 +219,12 @@ function PostComponent() {
                 <ArrowUpRight className="h-3 w-3" />
               </a>
             }
-            {claimStatus === ClaimStatus.CLAIMED &&
-              <a className="text-sm flex space-x-1 items-center text-green-500 font-semibold">
-                <span>claimed</span>
-              </a>
-            }
             {claimStatus === ClaimStatus.PENDING &&
               <a className="text-sm flex space-x-1 items-center font-semibold">
                 <span>pending</span>
               </a>
             }
-          </Step>
+          </StatusStep>
         </div>
         <div className="bg-gray-200 px-4 py-3">
           <div className="text-sm">
@@ -237,7 +232,7 @@ function PostComponent() {
             <a className="link">Learn More</a>
           </div>
         </div>
-      </div>
+      </div >
       <button
         type="button"
         className={cn("btn btn-primary")}
@@ -261,47 +256,6 @@ function PostComponent() {
       >
         Return home
       </button>
-    </div>
+    </div >
   );
-}
-
-function Step(props: {
-  number: number;
-  title: string;
-  description: string;
-  children?: React.ReactNode;
-  className?: string;
-  done?: boolean;
-  loading?: boolean
-}) {
-  return (
-    <div className={"flex items-center justify-between"}>
-      <div className="flex space-x-3">
-        {!props.done &&
-          <div className="h-5 min-w-5 mt-1 flex justify-center items-center rounded-full border-2 border-gray-800">
-            {<span className="text-xs">{props.number}</span>}
-          </div>
-        }
-        {props.done && <div className="h-5 min-w-5 mt-1 flex justify-center items-center rounded-full border-2 border-green-500 text-green-500">
-          {<span className="text-xs">✓</span>}
-        </div>}
-        <div>
-          <h2 className={cn("text-lg", { "text-green-500": props.done })}>{props.title}</h2>
-          <p className="text-sm">{props.description}</p>
-          {props.loading && <Spinner />}
-          {!props.loading &&
-            <div className={props.className}>{props.children}</div>
-          }
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Spinner() {
-  return (
-    <div
-      className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-e-transparent align-[-0.125em] text-surface motion-reduce:animate-[spin_1.5s_linear_infinite] dark:text-primary"
-      role="status">
-    </div>)
 }

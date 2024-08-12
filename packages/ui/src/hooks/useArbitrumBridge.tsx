@@ -1,3 +1,4 @@
+import { ITxReq } from "@/lib/get-tx-price";
 import { getL1Chain, getL1Provider, getL2Chain, getL2Provider } from "@/lib/public-client";
 import {
   ChildToParentMessageStatus,
@@ -8,7 +9,8 @@ import {
 import { ArbSys__factory } from "@arbitrum/sdk/dist/lib/abi/factories/ArbSys__factory";
 import { ARB_SYS_ADDRESS } from "@arbitrum/sdk/dist/lib/dataEntities/constants";
 import "@rainbow-me/rainbowkit/styles.css";
-import { ethers } from "ethers";
+import { BigNumber, ethers } from "ethers";
+import { Address } from "viem";
 import { useAccount, useSwitchChain } from "wagmi";
 import { useEthersSigner } from "./useEthersSigner";
 
@@ -26,30 +28,30 @@ export default function useArbitrumBridge() {
   const signer = useEthersSigner({ chainId: parentChainId });
   const l2Network = getArbitrumNetwork(childNetworkId)
 
-  async function ensureChainId(childSigner: ethers.providers.JsonRpcSigner, chainId: number) {
-    return childSigner.getChainId()
-      .then(x => { if (x !== chainId) switchChainAsync({ chainId }) })
+  async function ensureChainId(chainId: number) {
+    return switchChainAsync({ chainId })
   }
 
-  async function sendWithDelayedInbox(tx: any, childSigner: ethers.providers.JsonRpcSigner) {
-    await ensureChainId(childSigner, childNetworkId);
+
+  async function sendWithDelayedInbox(tx: ITxReq, childSigner: ethers.providers.JsonRpcSigner) {
+    await ensureChainId(childNetworkId);
     const inboxSdk = new InboxTools(signer!, l2Network);
 
     // extract l2's tx hash first so we can check if this tx executed on l2 later.
-    const l2Txhash = (await inboxSdk.signChildTx(tx, childSigner)) as `0x${string}`;
+    const l2Txhash = (await inboxSdk.signChildTx(tx, childSigner)) as Address;
 
     return l2Txhash;
   }
 
   async function isForceIncludePossible(parentSigner: ethers.providers.JsonRpcSigner) {
-    await ensureChainId(parentSigner, parentChainId);
+    await ensureChainId(parentChainId);
     const inboxSdk = new InboxTools(parentSigner, l2Network);
 
     return !!(await inboxSdk.getForceIncludableEvent());
   }
 
   async function forceInclude(parentSigner: ethers.providers.JsonRpcSigner) {
-    await ensureChainId(parentSigner, parentChainId);
+    await ensureChainId(parentChainId);
     const inboxTools = new InboxTools(parentSigner, l2Network);
 
     if (!(await inboxTools.getForceIncludableEvent())) {
@@ -63,15 +65,15 @@ export default function useArbitrumBridge() {
     } else return null;
   }
 
-  async function assembleWithdraw(from: string, amountInWei: string) {
+  async function assembleWithdraw(from: string, amountInWei: string): Promise<ITxReq> {
     // Assemble a generic withdraw transaction
     const arbsysIface = ArbSys__factory.createInterface();
-    const calldatal2 = arbsysIface.encodeFunctionData("withdrawEth", [from]);
+    const calldatal2 = arbsysIface.encodeFunctionData("withdrawEth", [from]) as Address;
 
     return {
       data: calldatal2,
       to: ARB_SYS_ADDRESS,
-      value: amountInWei,
+      value: BigNumber.from(amountInWei),
     };
   }
 
@@ -85,8 +87,8 @@ export default function useArbitrumBridge() {
     );
   }
 
-  async function pushChildTxToParent(l2SignedTx: `0x${string}`, parentSigner: ethers.providers.JsonRpcSigner) {
-    await ensureChainId(parentSigner, parentChainId);
+  async function pushChildTxToParent(l2SignedTx: Address, parentSigner: ethers.providers.JsonRpcSigner) {
+    await ensureChainId(parentChainId);
     const l2Network = getArbitrumNetwork(childNetworkId);
     const inboxSdk = new InboxTools(parentSigner, l2Network);
 
@@ -97,7 +99,7 @@ export default function useArbitrumBridge() {
 
     const inboxRec = await resultsL1.wait();
 
-    return inboxRec.transactionHash as `0x${string}`
+    return inboxRec.transactionHash as Address
   }
 
   async function getClaimStatus(l2TxnHash: string): Promise<ClaimStatus> {
