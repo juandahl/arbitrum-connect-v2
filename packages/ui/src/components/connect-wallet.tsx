@@ -1,9 +1,12 @@
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import cn from "classnames";
+import { ConnectButtonProps } from "node_modules/@rainbow-me/rainbowkit/dist/components/ConnectButton/ConnectButton";
 
+interface ICustomConnectButton extends React.ComponentProps<"button">, ConnectButtonProps { }
 export default function CustomConnectButton(
-  props: React.ComponentProps<"button">
+  props: ICustomConnectButton
 ) {
+  const { chainStatus, ...btnProps } = props
   return (
     <ConnectButton.Custom>
       {({
@@ -19,21 +22,23 @@ export default function CustomConnectButton(
 
         return (
           <div
-            className={cn(!ready && "opacity-0 pointer-events-none select-none")}
+            className={cn(!ready && "opacity-0 pointer-events-none select-none", { "btn-primary": !connected })}
             aria-hidden={!ready}
           >
             {!connected ? (
-              <button onClick={openConnectModal} type="button" {...props}>
+              <button onClick={openConnectModal} type="button" {...btnProps}>
                 {props.children ?? "Connect Wallet"}
               </button>
             ) : chain.unsupported ? (
-              <button onClick={openChainModal} type="button" {...props}>
+              <button onClick={openChainModal} type="button" {...btnProps}>
                 Wrong network
               </button>
             ) : (
-              <button onClick={openAccountModal} type="button" {...props}>
-                {account.displayName}
-              </button>
+              <div className="tooltip tooltip-bottom flex items-center justify-evenly" data-tip={chain.name}>
+                <button onClick={openAccountModal} type="button" {...btnProps}>
+                  {props.chainStatus === "icon" && chain.hasIcon && <img src={chain.iconUrl} width={20} alt="chain icon" />}{account.displayName}
+                </button>
+              </div>
             )}
           </div>
         );
