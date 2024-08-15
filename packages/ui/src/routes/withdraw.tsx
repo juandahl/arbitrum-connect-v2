@@ -1,6 +1,7 @@
 import EthIcon from "@/assets/ethereum-icon.svg";
 import { useAlertContext } from "@/contexts/alert/alert-context";
 import { useWeb3ClientContext } from "@/contexts/web3-client-context";
+import { useEthPrice } from "@/hooks/use-eth-price";
 import useArbitrumBridge, { ClaimStatus } from "@/hooks/useArbitrumBridge";
 import {
   getMockedL1ClaimTxGasLimit,
@@ -41,12 +42,7 @@ function WithdrawScreen() {
   const navigate = useNavigate();
   const { parentProvider, childProvider } = useWeb3ClientContext();
   const { amount: amountInWei } = Route.useSearch();
-
-  useEffect(() => {
-    if (BigNumber.from(amountInWei).lte(0)) {
-      navigate({ to: "/" });
-    }
-  }, [amountInWei]);
+  const { ethPrice } = useEthPrice();
 
   const [approvedAproxFees, setApprovedAproxFees] = useState<boolean>(false);
   const [approvedSequencerMaySpeedUp, setApprovedSequencerMaySpeedUp] =
@@ -59,16 +55,19 @@ function WithdrawScreen() {
     queryKey: ["withdrawPrice"],
     queryFn: () => getMockedL2WithdrawPrice(childProvider),
     refetchOnWindowFocus: true,
+    initialData: BigNumber.from(0),
   });
   const { data: confirmPrice, isFetching: confirmPriceFetching } = useQuery({
     queryKey: ["confirmPrice"],
     queryFn: () => getMockedSendL1MsgPrice(parentProvider),
     refetchOnWindowFocus: true,
+    initialData: BigNumber.from(0),
   });
   const { data: claimPrice, isFetching: claimPriceFetching } = useQuery({
     queryKey: ["claimPrice"],
     queryFn: () => getMockedL1ClaimTxGasLimit(parentProvider),
     refetchOnWindowFocus: true,
+    initialData: BigNumber.from(0),
   });
 
   function onContinue() {
@@ -79,7 +78,7 @@ function WithdrawScreen() {
           const tx: Transaction = {
             bridgeHash: l2Txhash,
             amount: amountInWei,
-            claimStatus: ClaimStatus.PENDING
+            claimStatus: ClaimStatus.PENDING,
           };
           transactionsStorageService.create(tx);
           navigate({ to: `/activity/${tx.bridgeHash}` });
@@ -94,6 +93,17 @@ function WithdrawScreen() {
     return approvedAproxFees && approvedSequencerMaySpeedUp && approvedTime;
   }, [approvedAproxFees, approvedSequencerMaySpeedUp, approvedTime]);
 
+  const amountUSD = (ethPrice * +formatEther(amountInWei)).toFixed(3);
+  const withdrawUSD = (+formatEther(withdrawPrice) * ethPrice).toFixed(2);
+  const confirmUSD = (+formatEther(confirmPrice) * ethPrice).toFixed(2);
+  const claimUSD = (+formatEther(claimPrice) * ethPrice).toFixed(2);
+
+  useEffect(() => {
+    if (BigNumber.from(amountInWei).lte(0)) {
+      navigate({ to: "/" });
+    }
+  }, [amountInWei]);
+
   return (
     <div className="flex flex-col max-w-xl mx-auto gap-6">
       <button
@@ -105,7 +115,7 @@ function WithdrawScreen() {
       </button>
 
       {/* amount */}
-      <div className="flex items-center justify-between bg-neutral-50/1 border border-neutral-200 rounded-2xl md:p-6 p-4">
+      <div className="flex items-center justify-between bg-neutral-50 border border-neutral-200 rounded-2xl md:p-6 p-4">
         <div className="flex items-center gap-3">
           <img src={EthIcon} alt="ethereum icon" />
           <div className="flex items-end space-x-1">
@@ -116,12 +126,12 @@ function WithdrawScreen() {
             <div className="ml-0.5 font-bold">ETH</div>
           </div>
         </div>
-        <div className="text-neutral-400">~ - USD</div>
+        <div className="text-neutral-400">~ ${amountUSD} USD</div>
       </div>
 
       {/* summary */}
-      <div className="flex grow justify-between items-center flex-col bg-neutral-50/1 border border-neutral-200 rounded-2xl p-4 md:p-6 gap-6">
-        <div className="bg-[#C2DCFF] text-sm rounded-2xl p-4">
+      <div className="flex grow justify-between items-center flex-col bg-neutral-50 border border-neutral-200 rounded-2xl p-4 md:p-6 gap-6">
+        <div className="text-sm rounded-2xl p-4">
           You are about to withdraw funds from Arbitrum to Ethereum. This
           process requires 2 transactions and gas fees in ETH. Any doubts?{" "}
           <a href="#" className="link">
@@ -136,19 +146,20 @@ function WithdrawScreen() {
           <div className="flex flex-col md:flex-row md:justify-between w-full">
             <span className="block text-left">Initiate Withdrawal</span>
             <div className="flex items-center flex-row gap-2">
-              <span className="text-sm flex flex-row items-center gap-3">
-                {withdrawPriceFetching ? (
-                  <LoaderCircle
-                    strokeWidth={3}
-                    size={10}
-                    className="animate-spin"
-                  />
-                ) : (
-                  withdrawPrice?.slice(0, 10) ?? "-"
-                )}{" "}
-                ETH
-              </span>
-              <span className="text-neutral-400 text-sm">~ $-</span>
+              {withdrawPriceFetching ? (
+                <LoaderCircle
+                  strokeWidth={3}
+                  size={10}
+                  className="animate-spin"
+                />
+              ) : (
+                <span className="text-sm flex flex-row items-center gap-3">
+                  {formatEther(withdrawPrice)?.slice(0, 10) ?? "-"} ETH
+                  <span className="text-neutral-400 text-sm">
+                    ~ ${withdrawUSD}
+                  </span>
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -160,18 +171,20 @@ function WithdrawScreen() {
           <div className="flex flex-col md:flex-row md:justify-between w-full">
             <span className="block text-left">Confirm Withdrawal</span>
             <div className="flex items-center flex-row gap-2">
-              <span className="text-sm flex flex-row items-center gap-3">
-                {confirmPriceFetching ? (
-                  <LoaderCircle
-                    strokeWidth={3}
-                    size={10}
-                    className="animate-spin"
-                  />
-                ) : (confirmPrice?.slice(0, 10) ?? "-"
-                )}{" "}
-                ETH
-              </span>
-              <span className="text-neutral-400 text-sm">~ $-</span>
+              {confirmPriceFetching ? (
+                <LoaderCircle
+                  strokeWidth={3}
+                  size={10}
+                  className="animate-spin"
+                />
+              ) : (
+                <span className="text-sm flex flex-row items-center gap-3">
+                  {formatEther(confirmPrice)?.slice(0, 10) ?? "-"} ETH
+                  <span className="text-neutral-400 text-sm">
+                    ~ ${confirmUSD}
+                  </span>
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -194,30 +207,32 @@ function WithdrawScreen() {
             <p className="text-left">Claim funds on Ethereum</p>
 
             <div className="flex items-center flex-row just gap-3">
-              <span className="text-sm flex flex-row items-center gap-3">
-                {claimPriceFetching ? (
-                  <LoaderCircle
-                    strokeWidth={3}
-                    size={10}
-                    className="animate-spin"
-                  />
-                ) : (claimPrice?.slice(0, 10) ?? "-"
-                )}{" "}
-                ETH
-              </span>
-              <span className="text-neutral-400 text-sm">~ $-</span>
+              {claimPriceFetching ? (
+                <LoaderCircle
+                  strokeWidth={3}
+                  size={10}
+                  className="animate-spin"
+                />
+              ) : (
+                <span className="text-sm flex flex-row items-center gap-3">
+                  {formatEther(claimPrice)?.slice(0, 10)} ETH
+                  <span className="text-neutral-400 text-sm">
+                    ~ ${claimUSD}
+                  </span>
+                </span>
+              )}
             </div>
           </div>
         </div>
       </div>
 
       {/* terms */}
-      <div className="flex grow justify-between flex-col text-start bg-neutral-50/1 border border-neutral-200 rounded-2xl p-4 md:p-6 gap-6">
+      <div className="flex grow justify-between flex-col text-start bg-neutral-50 border border-neutral-200 rounded-2xl p-4 md:p-6 gap-6">
         <div className="flex gap-4 md:gap-6">
           <input
             id="terms-time"
             type="checkbox"
-            className="cursor-pointer"
+            className="cursor-pointer accent-primary"
             checked={approvedTime}
             onChange={() => setApprovedTime((v) => !v)}
           />
@@ -230,7 +245,7 @@ function WithdrawScreen() {
           <input
             id="terms-sequencer"
             type="checkbox"
-            className="cursor-pointer"
+            className="cursor-pointer accent-primary"
             checked={approvedSequencerMaySpeedUp}
             onChange={() => setApprovedSequencerMaySpeedUp((v) => !v)}
           />
@@ -244,7 +259,7 @@ function WithdrawScreen() {
           <input
             id="terms-fees"
             type="checkbox"
-            className="cursor-pointer"
+            className="cursor-pointer accent-primary"
             checked={approvedAproxFees}
             onChange={() => setApprovedAproxFees((v) => !v)}
           />
