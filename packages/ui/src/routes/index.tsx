@@ -160,7 +160,7 @@ function HomeScreen() {
           }}
           type="submit"
           className={cn(
-            "btn btn-primary rounded-3xl disabled:text-neutral-200", { "animate-shake": error }
+            "btn btn-primary font-normal rounded-3xl text-neutral-100 disabled:text-neutral-400 disabled:bg-neutral-200", { "animate-shake": error }
           )}
           disabled={!address || !arbBalance}
         >

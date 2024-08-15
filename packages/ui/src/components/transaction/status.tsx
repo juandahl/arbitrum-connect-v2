@@ -177,8 +177,8 @@ export function TransactionStatus(props: {
     }, [isVisible]);
 
     return (
-        <div className="flex flex-col text-start justify-between bg-gray-100 border border-neutral-200 rounded-2xl overflow-hidden">
-            <div ref={ref} className="flex flex-col grow justify-between md:p-6">
+        <div className="flex flex-col text-start justify-between bg-gray-100 border border-neutral-200 rounded-2xl pt-4  overflow-hidden">
+            <div ref={ref} className="flex flex-col grow justify-between text-primary-700 px-4 md:px-6">
                 <StatusStep
                     done
                     number={1}
@@ -295,7 +295,7 @@ export function TransactionStatus(props: {
                         claimFundsTx.isPending || fetchingClaimStatus || fetchingL2ToL1Msg
                     }
                     number={4}
-                    className="pt-2"
+                    className="flex flex-col items-start pt-2 space-y-2 md:space-y-0 md:space-x-2 mb-4 md:flex-row md:items-center"
                     title="Claim funds on Ethereum"
                     description="After your transaction has been validated, you can follow the state of it and claim your funds in the arbitrum bridge page by just connecting your wallet."
                     lastStep
@@ -315,7 +315,7 @@ export function TransactionStatus(props: {
                         )}
                 </StatusStep>
             </div>
-            <div className="bg-gray-200 px-4 py-3">
+            <div className="bg-gray-200 mt-4 px-4 py-3 text-center">
                 <div className="text-sm">
                     Have questions about this process? <a className="link">Learn More</a>
                 </div>
