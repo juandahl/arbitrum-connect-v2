@@ -48,7 +48,7 @@ function HomeScreen() {
     setError(error)
   }
 
-  const amountUSD = (Math.max(+amountEth, 0) * (ethPrice ?? 0));
+  const amountUSD = Math.max(+amountEth, 0) * (ethPrice ?? 0);
 
 
   return (
@@ -90,7 +90,7 @@ function HomeScreen() {
               />
               <div className="flex gap-1 ml-4 text-neutral-400 items-center">
                 <div className="text-base">
-                  ~ {amountUSD.toString()} USD
+                  ~ {amountUSD.toFixed(2)} USD
                 </div>
                 <ArrowRightLeft size={18} />
               </div>

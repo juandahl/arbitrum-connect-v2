@@ -93,7 +93,7 @@ function WithdrawScreen() {
     return approvedAproxFees && approvedSequencerMaySpeedUp && approvedTime;
   }, [approvedAproxFees, approvedSequencerMaySpeedUp, approvedTime]);
 
-  const amountUSD = (ethPrice * +formatEther(amountInWei)).toFixed(3);
+  const amountUSD = (ethPrice * +formatEther(amountInWei)).toFixed(2);
   const withdrawUSD = (+formatEther(withdrawPrice) * ethPrice).toFixed(2);
   const confirmUSD = (+formatEther(confirmPrice) * ethPrice).toFixed(2);
   const claimUSD = (+formatEther(claimPrice) * ethPrice).toFixed(2);
