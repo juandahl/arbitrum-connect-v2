@@ -17,8 +17,8 @@ function ActivityScreen() {
   const [txHistory, setTxHistory] = useState<Transaction[]>([]);
 
   useEffect(() => {
-    if(address) setTxHistory(transactionsStorageService.getByAccount(address));
-    else setTxHistory([]);
+    const txs = address ? transactionsStorageService.getByAccount(address) : [];
+    setTxHistory(txs);
   }, [address]);
 
   return (
