@@ -13,6 +13,7 @@ import { Address } from "viem";
 import { AddToCalendarButton } from "../add-to-calendar";
 import { GoogleCalendarIcon } from "../icons";
 import { StatusStep } from "./status-step";
+import { LEARN_MORE_URI } from "@/constants";
 
 export function TransactionStatus(props: {
     tx: Transaction;
@@ -317,7 +318,7 @@ export function TransactionStatus(props: {
             </div>
             <div className="bg-gray-200 mt-4 px-4 py-3 text-center">
                 <div className="text-sm">
-                    Have questions about this process? <a className="link">Learn More</a>
+                    Have questions about this process? <a className="link" href={LEARN_MORE_URI} target="_blank">Learn More</a>
                 </div>
             </div>
         </div>

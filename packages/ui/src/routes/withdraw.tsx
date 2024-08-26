@@ -1,4 +1,5 @@
 import EthIcon from "@/assets/ethereum-icon.svg";
+import { LEARN_MORE_URI } from "@/constants";
 import { useAlertContext } from "@/contexts/alert/alert-context";
 import { useWeb3ClientContext } from "@/contexts/web3-client-context";
 import { useEthPrice } from "@/hooks/use-eth-price";
@@ -134,7 +135,7 @@ function WithdrawScreen() {
         <div className="text-sm rounded-2xl p-4 bg-primary-100">
           You are about to withdraw funds from Arbitrum to Ethereum. This
           process requires 2 transactions and gas fees in ETH. Any doubts?{" "}
-          <a href="#" className="link">
+          <a href={LEARN_MORE_URI} className="link" target="_blank">
             Learn More
           </a>
         </div>
