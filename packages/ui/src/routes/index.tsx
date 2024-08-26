@@ -92,7 +92,6 @@ function HomeScreen() {
                 <div className="text-base">
                   ~ {amountUSD.toFixed(2)} USD
                 </div>
-                <ArrowRightLeft size={18} />
               </div>
             </div>
             <div className={cn("flex justify-self-end text-red-600 h-8")}>
