@@ -86,7 +86,7 @@ function HomeScreen() {
                 onChange={(e) => { setAmountEth(e.target.value); setError(undefined); }}
                 placeholder="0"
                 type="number"
-                className={cn("flex bg-transparent text-primary-700 text-center text-7xl w-full outline-none remove-arrow font-semibold duration-200 ease-in-out", { "text-red-600": error })}
+                className={cn("flex bg-transparent text-primary-700 text-center text-7xl w-full outline-none remove-arrow font-semibold duration-200 ease-in-out focus:placeholder-transparent", { "text-red-600": error })}
               />
               <div className="flex gap-1 ml-4 text-neutral-400 items-center">
                 <div className="text-base">
