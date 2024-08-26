@@ -29,7 +29,7 @@ export class TransactionsStorageService {
     );
   }
 
-  //TODO: improve this, could we separate by account?
+  //TODO: improve this, could we split by account ? 
   create(tx: Transaction, account: Address): void {
     const txs = this.getAll();
     txs.push({...tx, account: account});
