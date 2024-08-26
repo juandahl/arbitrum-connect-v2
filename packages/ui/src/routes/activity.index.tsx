@@ -2,10 +2,10 @@ import EthereumIconCheck from "@/assets/ethereum-icon-check.svg";
 import EthereumIcon from "@/assets/ethereum-icon.svg";
 import { TransactionStatus } from "@/components/transaction/status";
 import { ClaimStatus } from "@/hooks/useArbitrumBridge";
-import { Transaction, transactionsStorageService } from "@/lib/transactions";
+import { transactionsStorageService } from "@/lib/transactions";
 import { createFileRoute } from "@tanstack/react-router";
 import { formatEther } from "ethers/lib/utils";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { useAccount } from "wagmi";
 
 export const Route = createFileRoute("/activity/")({
@@ -14,12 +14,10 @@ export const Route = createFileRoute("/activity/")({
 
 function ActivityScreen() {
   const { address } = useAccount();
-  const [txHistory, setTxHistory] = useState<Transaction[]>([]);
-
-  useEffect(() => {
-    const txs = address ? transactionsStorageService.getByAccount(address) : [];
-    setTxHistory(txs);
-  }, [address]);
+  
+  const txHistory = useMemo(() => {
+    return address ? transactionsStorageService.getByAccount(address) : [];
+  }, [address, transactionsStorageService]);
 
   return (
     <div className="flex flex-col max-w-xl mx-auto">
@@ -41,7 +39,7 @@ function ActivityScreen() {
                     <img src={EthereumIcon} />}
                   <div className="sm:block overflow-hidden text-ellipsis">Withdrawal</div>
                 </div>
-                <div>{formatEther(BigInt(x.amount)).slice(0, 6)} ETH</div>
+                <div>{formatEther(BigInt(x.amount)).slice(0, 8)} ETH</div>
               </div>
               <div className="collapse-content">
                 <TransactionStatus tx={x} isActive={false} />
