@@ -9,7 +9,7 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import cn from "classnames";
 import { parseUnits } from "ethers/lib/utils";
-import { ArrowRightLeft, CircleArrowRight } from 'lucide-react';
+import { CircleArrowRight } from 'lucide-react';
 import { useState } from "react";
 import { useAccount } from "wagmi";
 
@@ -29,7 +29,7 @@ function HomeScreen() {
   const [amountEth, setAmountEth] = useState<string>("");
   const [error, setError] = useState<FormError>();
   const { ethPrice } = useEthPrice();
-
+  
   function handleSubmit() {
     const amount = parseUnits(amountEth, 18);
     if (amount.lte("0")) {
@@ -49,7 +49,6 @@ function HomeScreen() {
   }
 
   const amountUSD = Math.max(+amountEth, 0) * (ethPrice ?? 0);
-
 
   return (
     <form className="max-w-xl mx-auto" onSubmit={handleSubmit} noValidate>

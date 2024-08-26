@@ -6,17 +6,20 @@ import { Transaction, transactionsStorageService } from "@/lib/transactions";
 import { createFileRoute } from "@tanstack/react-router";
 import { formatEther } from "ethers/lib/utils";
 import { useEffect, useState } from "react";
+import { useAccount } from "wagmi";
 
 export const Route = createFileRoute("/activity/")({
   component: ActivityScreen,
 });
 
 function ActivityScreen() {
+  const { address } = useAccount();
   const [txHistory, setTxHistory] = useState<Transaction[]>([]);
 
   useEffect(() => {
-    setTxHistory(transactionsStorageService.getAll());
-  }, []);
+    if(address) setTxHistory(transactionsStorageService.getByAccount(address));
+    else setTxHistory([]);
+  }, [address]);
 
   return (
     <div className="flex flex-col max-w-xl mx-auto">

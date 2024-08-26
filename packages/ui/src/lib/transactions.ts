@@ -7,6 +7,7 @@ export interface Transaction {
   delayedInboxTimestamp?: number;
   delayedInboxHash?: Address;
   claimStatus: ClaimStatus;
+  account?: Address;
 }
 
 export class TransactionsStorageService {
@@ -14,6 +15,10 @@ export class TransactionsStorageService {
 
   getAll(): Transaction[] {
     return JSON.parse(localStorage.getItem(this.storageKey) ?? "[]");
+  }
+
+  getByAccount(account: Address): Transaction[] {
+    return JSON.parse(localStorage.getItem(this.storageKey) ?? "[]").filter((tx: Transaction) => tx.account === account);
   }
 
   getByBridgeHash(hash: Address): Transaction | null {
@@ -24,17 +29,20 @@ export class TransactionsStorageService {
     );
   }
 
-  create(tx: Transaction): void {
+  //TODO: improve this, could we separate by account?
+  create(tx: Transaction, account: Address): void {
+    const txs = this.getAll();
+    txs.push({...tx, account: account});
     localStorage.setItem(
       this.storageKey,
-      JSON.stringify([...this.getAll(), tx])
+      JSON.stringify(txs)
     );
   }
 
   update(tx: Transaction): void {
     const txs = this.getAll();
     const txToUpdateIndex = txs.findIndex((x) => x.bridgeHash == tx.bridgeHash);
-    txs[txToUpdateIndex] = tx;
+    txs[txToUpdateIndex] = {...txs[txToUpdateIndex], ...tx};
     localStorage.setItem(this.storageKey, JSON.stringify([...txs]));
   }
 }

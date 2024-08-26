@@ -17,6 +17,8 @@ import { BigNumber } from "ethers";
 import { formatEther } from "ethers/lib/utils";
 import { ChevronLeft, LoaderCircle } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { Address } from "viem";
+import { useAccount } from "wagmi";
 
 interface SearchParams {
   amount: string;
@@ -41,6 +43,7 @@ export const Route = createFileRoute("/withdraw")({
 
 function WithdrawScreen() {
   const navigate = useNavigate();
+  const { address } = useAccount()
   const { parentProvider, childProvider } = useWeb3ClientContext();
   const { amount: amountInWei } = Route.useSearch();
   const { ethPrice } = useEthPrice();
@@ -71,7 +74,7 @@ function WithdrawScreen() {
     initialData: BigNumber.from(0),
   });
 
-  function onContinue() {
+  function onContinue(address: Address) {
     setLoading(true);
     signer &&
       initiateWithdraw(amountInWei, signer)
@@ -81,7 +84,7 @@ function WithdrawScreen() {
             amount: amountInWei,
             claimStatus: ClaimStatus.PENDING,
           };
-          transactionsStorageService.create(tx);
+          transactionsStorageService.create(tx, address);
           navigate({ to: `/activity/${tx.bridgeHash}` });
         })
         .catch((e) => {
@@ -275,8 +278,8 @@ function WithdrawScreen() {
       <button
         type="button"
         className={cn("btn btn-primary rounded-2xl font-normal text-neutral-100 disabled:text-neutral-400 disabled:bg-neutral-200")}
-        disabled={!canContinue || loading}
-        onClick={onContinue}
+        disabled={!canContinue || loading || !address}
+        onClick={() => address && onContinue(address)}
       >
         {loading ? "Loading..." : "Confirm Withdrawal"}
       </button>
