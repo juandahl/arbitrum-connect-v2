@@ -1,4 +1,5 @@
 import EthIcon from "@/assets/ethereum-icon.svg";
+import { LEARN_MORE_URI } from "@/constants";
 import { useAlertContext } from "@/contexts/alert/alert-context";
 import { useWeb3ClientContext } from "@/contexts/web3-client-context";
 import { useEthPrice } from "@/hooks/use-eth-price";
@@ -16,6 +17,8 @@ import { BigNumber } from "ethers";
 import { formatEther } from "ethers/lib/utils";
 import { ChevronLeft, LoaderCircle } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { Address } from "viem";
+import { useAccount } from "wagmi";
 
 interface SearchParams {
   amount: string;
@@ -40,6 +43,7 @@ export const Route = createFileRoute("/withdraw")({
 
 function WithdrawScreen() {
   const navigate = useNavigate();
+  const { address } = useAccount()
   const { parentProvider, childProvider } = useWeb3ClientContext();
   const { amount: amountInWei } = Route.useSearch();
   const { ethPrice } = useEthPrice();
@@ -70,7 +74,7 @@ function WithdrawScreen() {
     initialData: BigNumber.from(0),
   });
 
-  function onContinue() {
+  function onContinue(address: Address) {
     setLoading(true);
     signer &&
       initiateWithdraw(amountInWei, signer)
@@ -80,7 +84,7 @@ function WithdrawScreen() {
             amount: amountInWei,
             claimStatus: ClaimStatus.PENDING,
           };
-          transactionsStorageService.create(tx);
+          transactionsStorageService.create(tx, address);
           navigate({ to: `/activity/${tx.bridgeHash}` });
         })
         .catch((e) => {
@@ -134,7 +138,7 @@ function WithdrawScreen() {
         <div className="text-sm rounded-2xl p-4 bg-primary-100">
           You are about to withdraw funds from Arbitrum to Ethereum. This
           process requires 2 transactions and gas fees in ETH. Any doubts?{" "}
-          <a href="#" className="link">
+          <a href={LEARN_MORE_URI} className="link" target="_blank">
             Learn More
           </a>
         </div>
@@ -274,8 +278,8 @@ function WithdrawScreen() {
       <button
         type="button"
         className={cn("btn btn-primary rounded-2xl font-normal text-neutral-100 disabled:text-neutral-400 disabled:bg-neutral-200")}
-        disabled={!canContinue || loading}
-        onClick={onContinue}
+        disabled={!canContinue || loading || !address}
+        onClick={() => address && onContinue(address)}
       >
         {loading ? "Loading..." : "Confirm Withdrawal"}
       </button>

@@ -9,7 +9,7 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import cn from "classnames";
 import { parseUnits } from "ethers/lib/utils";
-import { ArrowRightLeft, CircleArrowRight } from 'lucide-react';
+import { CircleArrowRight } from 'lucide-react';
 import { useState } from "react";
 import { useAccount } from "wagmi";
 
@@ -29,7 +29,7 @@ function HomeScreen() {
   const [amountEth, setAmountEth] = useState<string>("");
   const [error, setError] = useState<FormError>();
   const { ethPrice } = useEthPrice();
-
+  
   function handleSubmit() {
     const amount = parseUnits(amountEth, 18);
     if (amount.lte("0")) {
@@ -49,7 +49,6 @@ function HomeScreen() {
   }
 
   const amountUSD = Math.max(+amountEth, 0) * (ethPrice ?? 0);
-
 
   return (
     <form className="max-w-xl mx-auto" onSubmit={handleSubmit} noValidate>
@@ -86,13 +85,12 @@ function HomeScreen() {
                 onChange={(e) => { setAmountEth(e.target.value); setError(undefined); }}
                 placeholder="0"
                 type="number"
-                className={cn("flex bg-transparent text-primary-700 text-center text-7xl w-full outline-none remove-arrow font-semibold duration-200 ease-in-out", { "text-red-600": error })}
+                className={cn("flex bg-transparent text-primary-700 text-center text-7xl w-full outline-none remove-arrow font-semibold duration-200 ease-in-out focus:placeholder-transparent", { "text-red-600": error })}
               />
               <div className="flex gap-1 ml-4 text-neutral-400 items-center">
                 <div className="text-base">
                   ~ {amountUSD.toFixed(2)} USD
                 </div>
-                <ArrowRightLeft size={18} />
               </div>
             </div>
             <div className={cn("flex justify-self-end text-red-600 h-8")}>
