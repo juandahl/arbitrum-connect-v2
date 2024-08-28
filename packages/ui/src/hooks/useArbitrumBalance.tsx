@@ -16,7 +16,7 @@ export default function useArbitrumBalance() {
 
         setBalanceOnArbitrum(balance);
       } else
-        setBalanceOnArbitrum("-")
+        setBalanceOnArbitrum("0");
     };
 
     getBalance();

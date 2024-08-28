@@ -47,7 +47,7 @@ function HomeScreen() {
   function triggerError(error: FormError) {
     setError(error)
   }
-
+  
   const amountUSD = Math.max(+amountEth, 0) * (ethPrice ?? 0);
 
   return (
@@ -89,7 +89,7 @@ function HomeScreen() {
               />
               <div className="flex gap-1 ml-4 text-neutral-400 items-center">
                 <div className="text-base">
-                  ~ {amountUSD.toFixed(2)} USD
+                  ~ {amountUSD?.toFixed(2)} USD
                 </div>
               </div>
             </div>

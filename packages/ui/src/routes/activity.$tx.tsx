@@ -1,3 +1,4 @@
+import HomeButton from "@/components/layout/home-button";
 import { TransactionStatus } from "@/components/transaction/status";
 import { transactionsStorageService } from "@/lib/transactions";
 import {
@@ -59,17 +60,7 @@ function PostComponent() {
         <Bell />
         Go to my activity
       </button>
-      <button
-        type="button"
-        className={cn("btn btn-secondary")}
-        style={{
-          border: "1px solid black",
-          borderRadius: 16,
-        }}
-        onClick={() => navigate({ to: "/" })}
-      >
-        Return home
-      </button>
+      <HomeButton />
     </div >
   );
 }
