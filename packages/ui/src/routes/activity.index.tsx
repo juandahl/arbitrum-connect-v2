@@ -1,5 +1,6 @@
 import EthereumIconCheck from "@/assets/ethereum-icon-check.svg";
 import EthereumIcon from "@/assets/ethereum-icon.svg";
+import HomeButton from "@/components/layout/home-button";
 import { TransactionStatus } from "@/components/transaction/status";
 import { ClaimStatus } from "@/hooks/useArbitrumBridge";
 import { transactionsStorageService } from "@/lib/transactions";
@@ -48,6 +49,7 @@ function ActivityScreen() {
           ))}
         </div>
       </div>
+      <HomeButton className="mt-6" />
     </div>
   );
 }
