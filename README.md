@@ -1,88 +1,126 @@
-# Arbitrum transaction enforcer
+# Arbitrum Transaction Enforcer
 
-## Prequisites
+## Prerequisites
 
 - Node version: 18.18.2
 - npm version: 9.8.1
 - pnpm version: 9.5.0
 
-## Run ui cypress tests
+## Install dependencies:
 
-Setup a `.env` like this one.
+Install dependencies running from the root:
 
-```
+`pnpm i`
+
+## Environments Variables
+
+Inside the ui folder, set up a `.env` file like this:
+
+```sh
+# /ui/.env
 PRIVATE_KEY=0xc64...
-# Uncomment to skip tests involving metamask
+
+VITE_IS_TESTNET=true
+VITE_HTTPS_ETH_RPC_URL=https://ethereum-sepolia-rpc.publicnode.com
+VITE_HTTPS_ARB_RPC_URL=https://sepolia-rollup.arbitrum.io/rpc
+
+# Uncomment to skip tests involving MetaMask
 # SKIP_METAMASK_SETUP=true
 # SKIP_METAMASK_INSTALL=true
 ```
 
-If metamask is involved, tests should be run one by one like:
-- `npx synpress run --configFile synpress.config.js --spec tests/e2e/specs/{name}.spec.ts`
-
-Otherwise you can run all tests together like 
-- `npm run e2e:run`
-- `pnpm e2e:run`
-
-
 ## Run UI
-Install dependencies
-`pnpm install`
 
-Run dev script
+Then, navigate to the ui folder:
+
+`cd packages/ui`
+
+Run the development script:
+
 `pnpm dev`
+
+## Run UI Cypress Tests
+
+> To run the tests, be sure to have the ui running in another console
+
+If MetaMask is involved, tests should be run one by one like:
+
+`pnpm dlx synpress run --configFile synpress.config.js --spec tests/e2e/specs/{name}.spec.ts`
+
+Otherwise, you can run all tests together with:
+
+`pnpm e2e:run`
 
 ## Deploy UI
 
-This repository is configured to deploy itself with github actions in order to simplify the process, feel free to check the github workflow files themselves.
+This repository is configured to deploy itself using GitHub Actions to simplify the process. Feel free to check the GitHub workflow files.
 
-If you want to execute it on your own, execute both infra & ui github workflows scripts manually on your machine replacing the corresponding variables. 
-AWS region is defined on the samconfig.toml file. 
+If you want GitHub workflows to handle the deployment, configure the following variables in your GitHub repository:
 
-If you want Github workflows to deploy it configure those variables on your github repository:
-- Variables
-   - AWS_REGION
-   - STACK_NAME
-   - UI_DOMAIN
-   - HOSTED_ZONE_ID
-   - AWS_CERTIFICATE_ID
-- Secrets
-   - AWS_ACCESS_KEY_ID
-   - AWS_SECRET_ACCESS_KEY
+### Variables:
 
-The UI resources are streamlined with an AWS cloudformation template, if you want to simplify the instalation and do not use DNS, you may remove those parts from both the AWS cloudformation template and github workflow  
+- `AWS_REGION`
+- `STACK_NAME`
+- `UI_DOMAIN`
+- `HOSTED_ZONE_ID`
+- `AWS_CERTIFICATE_ID`
 
-# Arbitrum Connect user guide
-Arbitrum Connect is our dApp that allows Arbitrum users to withdraw funds to Ethereum regardless of the Sequencer working or not.
-This document explains how to make use of our tool and it also briefly describes it's internals.
+### Secrets:
 
-## Arbitrum withdrawal ideal flow
-User's transactions should always reach Ethereum network if they were accepted by Arbitrum network and it's the Sequencer's job to do so, *which has a chance to fail too*.
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
 
-The Sequencer is responsible of two main actions on this flow:
-* Reading L2 transactions
-* Batching L2 transactions into L1
+If you want to execute it manually, run both the _infra.yml_ and _ui.yml_ workflow scripts on your machine, replacing the corresponding variables.
 
-## User pain point 
-Users may need to bypass the Sequencer in case their transaction doesn't reach the Ethereum network, but doing so requires deep blockchain knowledge and software developing skills.
+The AWS region is defined in the `samconfig.toml` file.
 
-## How we solved it
-Our dApp simplifies the process, giving the user a relaxed and inuitive interface to follow the required steps to safely execute a withdrawal bypassing the Sequencer, steps are described as it follows:
+The UI resources are streamlined with an AWS CloudFormation template. If you want to simplify the installation and not use DNS, you can remove those parts from both the CloudFormation template and the GitHub workflow.
 
-1. Connect your wallet & set the amount to withdraw from Arbitrum.
-2. Check for estimated fees and understand the process costs.
-3. Sign the Arbitrum withdraw transaction.
-    * It may prompt the wallet once or twice: Firstly to ensure Arbitrum network is set and afterwards to sign your L2 transaction
-4. Send the signed transaction to Arbitrum's Delayed Inbox (which lives on Ethereum network).
-    * Skips the Sequencer's reading.
-    * It may take 15-60 minutes to the Ethereum network to process the transaction.
-    * It may prompt the wallet once or twice: Firstly to en sure Ethereum network is set and afterwards to send your L2 transaction to the Delayed Inbox.
-6. Force the inclusion of the transaction.
-    * Skips the Sequencer's batching.
-    * Only eligible if the Sequencer didn't include the transaction past 24 hours.
-    * It may prompt the wallet once or twice: Firstly to en sure Ethereum network is set and afterwards to send your L2 transaction to the Delayed Inbox.
-7. Claim funds
-    * It may prompt the wallet once or twice: Firstly to en sure Ethereum network is set and afterwards to claim your funds. 
-    * Once the withdraw transaction efectively reached the L1, funds are ready to be claimed
+# Arbitrum Connect User Guide
 
-The process is asynchronous in many ways, which requires the user to check later on the status to keep going forward. To resume a withdrawal or manage any withdrawal, the **Activity tab** is there to list the user's history, check their curent status and execute actions on them if required.
+Arbitrum Connect is our dApp that allows Arbitrum users to withdraw funds to Ethereum, whether or not the Sequencer is operational.
+
+This document explains how to use our tool and briefly describes its internals.
+
+## Arbitrum Withdrawal Ideal Flow
+
+Users' transactions should always reach the Ethereum network if they were accepted by the Arbitrum network, but this relies on the Sequencer, which can occasionally fail.
+
+The Sequencer has two primary responsibilities in this process:
+
+- Reading L2 transactions
+- Batching L2 transactions into L1
+
+## User Pain Point
+
+Users may need to bypass the Sequencer if their transaction doesn't reach the Ethereum network. However, doing this requires deep blockchain knowledge and software development skills.
+
+## Our Solution
+
+Our dApp simplifies the process, providing users with an intuitive interface to follow the required steps to safely execute a withdrawal while bypassing the Sequencer. The steps are as follows:
+
+1. Connect your wallet and set the amount to withdraw from Arbitrum.
+
+2. Check the estimated fees and understand the process costs.
+
+3. Sign the Arbitrum withdrawal transaction.
+
+   - This may prompt the wallet once or twice: first to ensure the Arbitrum network is set, then to sign your L2 transaction.
+
+4. Send the signed transaction to Arbitrum's Delayed Inbox (on the Ethereum network).
+
+   - This bypasses the Sequencer’s reading.
+   - It may take 15-60 minutes for the Ethereum network to process the transaction.
+   - The wallet may prompt you again to ensure the Ethereum network is set and to send your L2 transaction to the Delayed Inbox.
+
+5. Force the inclusion of the transaction.
+
+   - This bypasses the Sequencer’s batching.
+   - This step is only necessary if the Sequencer hasn’t included the transaction within 24 hours.
+   - Again, the wallet may prompt you to ensure the Ethereum network is set and to send your L2 transaction.
+
+6. Claim funds.
+   - The wallet may prompt you again to ensure the Ethereum network is set and to claim your funds.
+   - Once the withdrawal transaction reaches L1, the funds are ready to be claimed.
+
+The process is asynchronous in several ways, so users will need to check the status and resume the withdrawal if necessary. The **Activity tab** lists the user's transaction history, current statuses, and available actions for ongoing withdrawals.
