@@ -6,15 +6,15 @@
 - npm version: 9.8.1
 - pnpm version: 9.5.0
 
-## Install dependencies:
+## Install Dependencies
 
-Install dependencies running from the root:
+Run the following from the root of the project to install dependencies:
 
 `pnpm i`
 
-## Environments Variables
+## Environment Variables
 
-Inside the ui folder, set up a `.env` file like this:
+Inside the `ui` folder, set up a `.env` file like this:
 
 ```sh
 # /ui/.env
@@ -31,7 +31,7 @@ VITE_HTTPS_ARB_RPC_URL=https://sepolia-rollup.arbitrum.io/rpc
 
 ## Run UI
 
-Then, navigate to the ui folder:
+Navigate to the `ui` folder:
 
 `cd packages/ui`
 
@@ -41,11 +41,11 @@ Run the development script:
 
 ## Run UI Cypress Tests
 
-> To run the tests, be sure to have the ui running in another console
+> Ensure the UI is running in another console before running tests
 
 If MetaMask is involved, tests should be run one by one like:
 
-`pnpm dlx synpress run --configFile synpress.config.js --spec tests/e2e/specs/{name}.spec.ts`
+`pnpm dlx synpress run --configFile synpress.config.js --spec tests/e2e/specs/activity.spec.ts`
 
 Otherwise, you can run all tests together with:
 
@@ -70,21 +70,20 @@ If you want GitHub workflows to handle the deployment, configure the following v
 - `AWS_ACCESS_KEY_ID`
 - `AWS_SECRET_ACCESS_KEY`
 
-If you want to execute it manually, run both the _infra.yml_ and _ui.yml_ workflow scripts on your machine, replacing the corresponding variables.
+To execute manually, run both the _infra.yml_ and _ui.yml_ workflow scripts on your machine, replacing the corresponding variables.
 
 The AWS region is defined in the `samconfig.toml` file.
 
-The UI resources are streamlined with an AWS CloudFormation template. If you want to simplify the installation and not use DNS, you can remove those parts from both the CloudFormation template and the GitHub workflow.
+The UI resources are streamlined with an AWS CloudFormation template. To simplify installation and avoid DNS, remove those parts from both the CloudFormation template and GitHub workflow.
 
 # Arbitrum Connect User Guide
 
-Arbitrum Connect is our dApp that allows Arbitrum users to withdraw funds to Ethereum, whether or not the Sequencer is operational.
-
+Arbitrum Connect is our dApp that allows Arbitrum users to withdraw funds to Ethereum, regardless of whether the Sequencer is operational.
 This document explains how to use our tool and briefly describes its internals.
 
 ## Arbitrum Withdrawal Ideal Flow
 
-Users' transactions should always reach the Ethereum network if they were accepted by the Arbitrum network, but this relies on the Sequencer, which can occasionally fail.
+Users' transactions should always reach the Ethereum network if they were accepted by the Arbitrum network. This relies on the Sequencer, which can occasionally fail.
 
 The Sequencer has two primary responsibilities in this process:
 
@@ -93,7 +92,7 @@ The Sequencer has two primary responsibilities in this process:
 
 ## User Pain Point
 
-Users may need to bypass the Sequencer if their transaction doesn't reach the Ethereum network. However, doing this requires deep blockchain knowledge and software development skills.
+Users may need to bypass the Sequencer if their transaction doesn't reach the Ethereum network. However, doing so requires deep blockchain knowledge and software development skills.
 
 ## Our Solution
 
@@ -117,7 +116,7 @@ Our dApp simplifies the process, providing users with an intuitive interface to 
 
    - This bypasses the Sequencer’s batching.
    - This step is only necessary if the Sequencer hasn’t included the transaction within 24 hours.
-   - Again, the wallet may prompt you to ensure the Ethereum network is set and to send your L2 transaction.
+   - The wallet may prompt you again to ensure the Ethereum network is set and to send your L2 transaction.
 
 6. Claim funds.
    - The wallet may prompt you again to ensure the Ethereum network is set and to claim your funds.
