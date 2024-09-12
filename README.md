@@ -18,15 +18,12 @@ Inside the `ui` folder, set up a `.env` file like this:
 
 ```sh
 # /ui/.env
-PRIVATE_KEY=0xc64...
-
 VITE_IS_TESTNET=true
 VITE_HTTPS_ETH_RPC_URL=https://ethereum-sepolia-rpc.publicnode.com
 VITE_HTTPS_ARB_RPC_URL=https://sepolia-rollup.arbitrum.io/rpc
 
 # Uncomment to skip tests involving MetaMask
 # SKIP_METAMASK_SETUP=true
-# SKIP_METAMASK_INSTALL=true
 ```
 
 ## Run UI
