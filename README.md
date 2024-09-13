@@ -1,55 +1,122 @@
-# Arbitrum transaction enforcer
+# Arbitrum Transaction Enforcer
 
-## Run ui cypress tests
-
-Setup a `.env` like this one.
-
-```
-PRIVATE_KEY=0xc64...
-# Uncomment to skip tests involving metamask
-# SKIP_METAMASK_SETUP=true
-# SKIP_METAMASK_INSTALL=true
-```
-
-If metamask is involved, tests should be runned one by one like:
-- `npx synpress run --configFile synpress.config.js --spec tests/e2e/specs/{name}.spec.ts`
-
-Otherwise you can run all tests together like 
-- `npm run e2e:run`
-- `pnpm e2e:run`
-
-
-## Node and NPM version
-
-TL;DR
+## Prerequisites
 
 - Node version: 18.18.2
 - npm version: 9.8.1
+- pnpm version: 9.5.0
 
-For now, **API breaks with Node > 18.18**. Node 18.18.2 is required.
+## Install Dependencies
 
-Also, Node 18.18.2 comes with npm 9.8.1, so the project should work properly with it. In any case, npm workspaces were added in npm 7.0.0, so you should have at least that version (9.8.1 strongly recommended).
+Run the following from the root of the project to install dependencies:
 
-## Create user for deployment (AWS)
+`pnpm i`
 
-1. Go to IAM service
-2. Click Users --> `Create User`
+## Environment Variables
 
-   ![image info](readme-assets/create-user.png)
+Inside the `ui` folder, set up a `.env` file like this:
 
-3. Fill the user name and click on `Next`
-4. Click `Attach policies directly`, click on `AdministratorAccess` and click on `Next`
-5. Click on `Create user`
-6. View the created user.
-7. Click on the tab `Security credentials` and click on `Create access key`
-8. Click on the option `Command Line Interface (CLI)` and click on `Next`
-9. Click on the button `Create access key`
-10. Copy the keys `Access key` and `Secret access key`
+```sh
+# /ui/.env
+VITE_IS_TESTNET=true
+VITE_HTTPS_ETH_RPC_URL=https://ethereum-sepolia-rpc.publicnode.com
+VITE_HTTPS_ARB_RPC_URL=https://sepolia-rollup.arbitrum.io/rpc
 
-## Configure serverless locally (OPTIONAL)
-
-Execute the following command in your terminal:
-
-```shell
-npx serverless config credentials --provider aws --key <your aws access key> --secret <your aws secret access key>
+# Uncomment to skip tests involving MetaMask
+# SKIP_METAMASK_SETUP=true
 ```
+
+## Run UI
+
+Navigate to the `ui` folder:
+
+`cd packages/ui`
+
+Run the development script:
+
+`pnpm dev`
+
+## Run UI Cypress Tests
+
+> Ensure the UI is running in another console before running tests
+
+If MetaMask is involved, tests should be run one by one like:
+
+`pnpm dlx synpress run --configFile synpress.config.js --spec tests/e2e/specs/activity.spec.ts`
+
+Otherwise, you can run all tests together with:
+
+`pnpm e2e:run`
+
+## Deploy UI
+
+This repository is configured to deploy itself using GitHub Actions to simplify the process. Feel free to check the GitHub workflow files.
+
+If you want GitHub workflows to handle the deployment, configure the following variables in your GitHub repository:
+
+### Variables:
+
+- `AWS_REGION`
+- `STACK_NAME`
+- `UI_DOMAIN`
+- `HOSTED_ZONE_ID`
+- `AWS_CERTIFICATE_ID`
+
+### Secrets:
+
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+
+To execute manually, run both the _infra.yml_ and _ui.yml_ workflow scripts on your machine, replacing the corresponding variables.
+
+The AWS region is defined in the `samconfig.toml` file.
+
+The UI resources are streamlined with an AWS CloudFormation template. To simplify installation and avoid DNS, remove those parts from both the CloudFormation template and GitHub workflow.
+
+# Arbitrum Connect User Guide
+
+Arbitrum Connect is our dApp that allows Arbitrum users to withdraw funds to Ethereum, regardless of whether the Sequencer is operational.
+This document explains how to use our tool and briefly describes its internals.
+
+## Arbitrum Withdrawal Ideal Flow
+
+Users' transactions should always reach the Ethereum network if they were accepted by the Arbitrum network. This relies on the Sequencer, which can occasionally fail.
+
+The Sequencer has two primary responsibilities in this process:
+
+- Reading L2 transactions
+- Batching L2 transactions into L1
+
+## User Pain Point
+
+Users may need to bypass the Sequencer if their transaction doesn't reach the Ethereum network. However, doing so requires deep blockchain knowledge and software development skills.
+
+## Our Solution
+
+Our dApp simplifies the process, providing users with an intuitive interface to follow the required steps to safely execute a withdrawal while bypassing the Sequencer. The steps are as follows:
+
+1. Connect your wallet and set the amount to withdraw from Arbitrum.
+
+2. Check the estimated fees and understand the process costs.
+
+3. Sign the Arbitrum withdrawal transaction.
+
+   - This may prompt the wallet once or twice: first to ensure the Arbitrum network is set, then to sign your L2 transaction.
+
+4. Send the signed transaction to Arbitrum's Delayed Inbox (on the Ethereum network).
+
+   - This bypasses the Sequencer’s reading.
+   - It may take 15-60 minutes for the Ethereum network to process the transaction.
+   - The wallet may prompt you again to ensure the Ethereum network is set and to send your L2 transaction to the Delayed Inbox.
+
+5. Force the inclusion of the transaction.
+
+   - This bypasses the Sequencer’s batching.
+   - This step is only necessary if the Sequencer hasn’t included the transaction within 24 hours.
+   - The wallet may prompt you again to ensure the Ethereum network is set and to send your L2 transaction.
+
+6. Claim funds.
+   - The wallet may prompt you again to ensure the Ethereum network is set and to claim your funds.
+   - Once the withdrawal transaction reaches L1, the funds are ready to be claimed.
+
+The process is asynchronous in several ways, so users will need to check the status and resume the withdrawal if necessary. The **Activity tab** lists the user's transaction history, current statuses, and available actions for ongoing withdrawals.
