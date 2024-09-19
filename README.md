@@ -1,5 +1,7 @@
 # Arbitrum Transaction Enforcer
 
+This dApp is designed to facilitate an uncommon type of withdrawal that bypasses the Arbitrum sequencer, allowing users to transfer funds from the Arbitrum network (Layer 2) to the Ethereum network (Layer 1). This tool enables specialized cross-chain fund transfers, ensuring a seamless and secure user experience. It promotes the decentralization of the Arbitrum chain by eliminating reliance on a centralized point of failure when the Sequencer is not functioning correctly — a capability that, until now, has only been accessible to highly technical users.
+
 ## Prerequisites
 
 - Node version: 18.18.2
@@ -75,8 +77,7 @@ The UI resources are streamlined with an AWS CloudFormation template. To simplif
 
 # Arbitrum Connect User Guide
 
-Arbitrum Connect is our dApp that allows Arbitrum users to withdraw funds to Ethereum, regardless of whether the Sequencer is operational.
-This document explains how to use our tool and briefly describes its internals.
+Arbitrum Connect is a dApp that allows Arbitrum users to withdraw funds to Ethereum, regardless of whether the Sequencer is operational. This document explains how to use the tool and provides a brief description of its internal workings.
 
 ## Arbitrum Withdrawal Ideal Flow
 
