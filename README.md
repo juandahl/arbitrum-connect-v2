@@ -39,19 +39,19 @@ Also, Node 18.18.2 comes with npm 9.8.1, so the project should work properly wit
 
 #### Steps to Run Locally
 
- 1. Clone the repository:
+1.  Clone the repository:
 
     ```bash
      git clone https://github.com/wakeuplabs-io/arbitrum-transaction-enforcer.git
     ```
 
- 2. Install dependencies:
+2.  Install dependencies:
 
     ```bash
      npm install
     ```
 
- 3. Start the local server:
+3.  Start the local server:
 
     ```bash
      npm run dev
@@ -108,3 +108,11 @@ The core objective is to provide a user-friendly interface that guides users thr
 Try it out here: https://staging-transaction-enforcer.wakeuplabs.link/
 
 ![Demo](/assets/app-preview-1.png)
+
+---
+
+<div style='text-align: center;'>
+  <a href='https://www.wakeuplabs.io/' target='_blank' rel='noreferrer'>
+    Made with love ❤️ by WakeUp Labs
+  </a>
+</div>
