@@ -1,3 +1,4 @@
+import { useWeb3ClientContext } from "@/contexts/web3-client-context";
 import { ethers } from "ethers";
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
@@ -5,20 +6,17 @@ import { useAccount } from "wagmi";
 export default function useArbitrumBalance() {
   const { address } = useAccount();
   const [balanceOnArbitrum, setBalanceOnArbitrum] = useState("");
+  const { childProvider } = useWeb3ClientContext();
+
   useEffect(() => {
     const getBalance = async () => {
-      const env = "dev";
-      const arbitrumRpcUrl =
-        env === "dev"
-          ? "https://sepolia-rollup.arbitrum.io/rpc"
-          : "https://arb1.arbitrum.io/rpc";
       if (address) {
-        const provider = new ethers.providers.JsonRpcProvider(arbitrumRpcUrl);
-        const rawBalance = await provider.getBalance(address);
+        const rawBalance = await childProvider.getBalance(address);
         const balance = ethers.utils.formatEther(rawBalance);
 
         setBalanceOnArbitrum(balance);
-      }
+      } else
+        setBalanceOnArbitrum("0");
     };
 
     getBalance();

@@ -1,0 +1,1 @@
+export const LEARN_MORE_URI = "https://docs.arbitrum.io/how-arbitrum-works/sequencer";
