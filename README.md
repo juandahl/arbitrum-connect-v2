@@ -1,4 +1,4 @@
-# 🧰 Arbitrum Transaction Enforcer - WakeUp Labs
+# 🧰 Arbitrum Connect - WakeUp Labs
 
 Welcome to [WakeUp Labs](https://www.wakeuplabs.io/) implementation of the front-end interface that enables users to force-include that we proposed here: [Tally](https://forum.arbitrum.foundation/t/tally-front-end-interface-to-force-transaction-inclusion-during-sequencer-downtime/21247).
 
@@ -39,19 +39,19 @@ Also, Node 18.18.2 comes with npm 9.8.1, so the project should work properly wit
 
 #### Steps to Run Locally
 
- 1. Clone the repository:
+1.  Clone the repository:
 
     ```bash
      git clone https://github.com/wakeuplabs-io/arbitrum-transaction-enforcer.git
     ```
 
- 2. Install dependencies:
+2.  Install dependencies:
 
     ```bash
      npm install
     ```
 
- 3. Start the local server:
+3.  Start the local server:
 
     ```bash
      npm run dev
@@ -59,7 +59,7 @@ Also, Node 18.18.2 comes with npm 9.8.1, so the project should work properly wit
 
 ## Process Flow
 
-The Arbitrum Sdk supports all types of transactions, but our user interface (UI) is currently
+The Arbitrum Connect SDK supports all types of transactions, but our user interface (UI) is currently
 limited to handling withdrawals, the most popular and important use case. Here's a diagram of the withdrawal process:
 
 ![image.png](./assets/sequence-diagram-1.png)
