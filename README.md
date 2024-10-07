@@ -1,4 +1,4 @@
-# 🧰 Arbitrum Transaction Enforcer - WakeUp Labs
+# 🧰 Arbitrum Connect - WakeUp Labs
 
 Welcome to [WakeUp Labs](https://www.wakeuplabs.io/) implementation of the front-end interface that enables users to force-include that we proposed here: [Arbitrum Forum Proposal](https://forum.arbitrum.foundation/t/tally-front-end-interface-to-force-transaction-inclusion-during-sequencer-downtime/21247).
 
@@ -85,7 +85,7 @@ Our dApp simplifies the process, providing users with an intuitive interface to 
 
 ### Process Flow
 
-The Arbitrum Sdk supports all types of transactions, but our user interface (UI) is currently
+The Arbitrum Connect SDK supports all types of transactions, but our user interface (UI) is currently
 limited to handling withdrawals, the most popular and important use case. Here's a diagram of the withdrawal process:
 
 ![image.png](./assets/sequence-diagram-1.png)
