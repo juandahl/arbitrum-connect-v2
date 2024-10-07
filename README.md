@@ -1,8 +1,8 @@
 # 🧰 Arbitrum Transaction Enforcer - WakeUp Labs
 
-Welcome to [WakeUp Labs](https://www.wakeuplabs.io/) implementation of the front-end interface that enables users to force-include that we proposed here: [Tally](https://forum.arbitrum.foundation/t/tally-front-end-interface-to-force-transaction-inclusion-during-sequencer-downtime/21247).
+Welcome to [WakeUp Labs](https://www.wakeuplabs.io/) implementation of the front-end interface that enables users to force-include that we proposed here: [Arbitrum Forum Proposal](https://forum.arbitrum.foundation/t/tally-front-end-interface-to-force-transaction-inclusion-during-sequencer-downtime/21247).
 
-You can take a look to the follow up or the project in the [Arbitrum Forum](https://forum.arbitrum.foundation/t/wakeup-labs-update-thread-front-end-interface-to-force-transaction-inclusion-during-sequencer-downtime/25926).
+You can take a look to the follow up or the project in the [Arbitrum Forum - Update Thread](https://forum.arbitrum.foundation/t/wakeup-labs-update-thread-front-end-interface-to-force-transaction-inclusion-during-sequencer-downtime/25926).
 
 We have developed a web app designed to facilitate an uncommon type
 of withdrawal that bypasses the Arbitrum sequencer, enabling users to transfer funds from the
@@ -57,7 +57,33 @@ Also, Node 18.18.2 comes with npm 9.8.1, so the project should work properly wit
      npm run dev
     ```
 
-## Process Flow
+## Arbitrum Connect User Guide
+
+### Our Solution
+
+Our dApp simplifies the process, providing users with an intuitive interface to follow the required steps to safely execute a withdrawal while bypassing the Sequencer. The steps are as follows:
+
+1. Connect your wallet and set the amount to withdraw from Arbitrum.
+
+2. Check the estimated fees and understand the process costs.
+
+3. Sign the Arbitrum withdrawal transaction.
+
+   - This may prompt the wallet once or twice: first to ensure the Arbitrum network is set, then to sign your L2 transaction.
+
+4. Send the signed transaction to Arbitrum's Delayed Inbox (on the Ethereum network).
+
+   - This bypasses the Sequencer's reading.
+   - It may take 15-60 minutes for the Ethereum network to process the transaction.
+   - The wallet may prompt you again to ensure the Ethereum network is set and to send your L2 transaction to the Delayed Inbox.
+
+5. Force the inclusion of the transaction.
+
+   - This bypasses the Sequencer's batching.
+   - This step is only necessary if the Sequencer hasn't included the transaction within 24 hours.
+   - The wallet may prompt you again to ensure the Ethereum network is set and to send your L2 transaction.
+
+### Process Flow
 
 The Arbitrum Sdk supports all types of transactions, but our user interface (UI) is currently
 limited to handling withdrawals, the most popular and important use case. Here's a diagram of the withdrawal process:
@@ -66,7 +92,13 @@ limited to handling withdrawals, the most popular and important use case. Here's
 
 > You can read more about the technical specifications [here](https://drive.google.com/file/d/1mBZLs-64t7PxTXpgJsqTmKRwsR5w5opG/view).
 
-## Try It Out - Quick Demo
+## Video Preview
+
+[![Video](/assets/video-preview-1.png)](https://www.youtube.com/watch?v=zvqPVIODLC4&t)
+> Check out the video preview of our dApp [here](https://www.youtube.com/watch?v=zvqPVIODLC4&t).
+
+
+## Try It Out - Testnet
 
 Sometimes, examples speak louder than words.
 
