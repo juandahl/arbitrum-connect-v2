@@ -42,7 +42,7 @@ Also, Node 18.18.2 comes with npm 9.8.1, so the project should work properly wit
 1.  Clone the repository:
 
     ```bash
-     git clone https://github.com/wakeuplabs-io/arbitrum-transaction-enforcer.git
+     git clone https://github.com/wakeuplabs-io/arbitrum-connect.git
     ```
 
 2.  Install dependencies:
@@ -95,8 +95,8 @@ limited to handling withdrawals, the most popular and important use case. Here's
 ## Video Preview
 
 [![Video](/assets/video-preview-1.png)](https://www.youtube.com/watch?v=zvqPVIODLC4&t)
-> Check out the video preview of our dApp [here](https://www.youtube.com/watch?v=zvqPVIODLC4&t).
 
+> Check out the video preview of our dApp [here](https://www.youtube.com/watch?v=zvqPVIODLC4&t).
 
 ## Try It Out - Testnet
 
