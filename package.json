@@ -7,7 +7,7 @@
   "license": "ISC",
   "scripts": {
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "dev": "concurrently --kill-others \"pnpm --filter api run dev\" \"pnpm --filter ui run dev\"",
+    "dev": "pnpm -r --stream dev",
     "build": "pnpm -r build"
   },
   "devDependencies": {
