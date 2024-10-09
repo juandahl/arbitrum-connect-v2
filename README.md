@@ -26,6 +26,8 @@ The implementation is fully open source with MIT license.
 
 ## Arbitrum Connect User Guide
 
+You can read our technical research [here](https://drive.google.com/file/d/1mBZLs-64t7PxTXpgJsqTmKRwsR5w5opG/view).
+
 ### Our Solution
 
 Our dApp simplifies the process, providing users with an intuitive interface to follow the required steps to safely execute a withdrawal while bypassing the Sequencer. The steps are as follows:
