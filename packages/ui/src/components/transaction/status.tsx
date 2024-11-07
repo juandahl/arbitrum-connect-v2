@@ -1,7 +1,7 @@
 import { useAlertContext } from "@/contexts/alert/alert-context";
 import { useWeb3ClientContext } from "@/contexts/web3-client-context";
-import useArbitrumBridge, { ClaimStatus } from "@/hooks/useArbitrumBridge";
-import useOnScreen from "@/hooks/useOnScreen";
+import useArbitrumBridge, { ClaimStatus } from "@/hooks/use-arbitrum-bridge";
+import useOnScreen from "@/hooks/use-on-screen";
 import { Transaction, transactionsStorageService } from "@/lib/transactions";
 import { getTimestampFromTxHash } from "@/lib/tx-actions";
 import { useMutation, useQuery } from "@tanstack/react-query";

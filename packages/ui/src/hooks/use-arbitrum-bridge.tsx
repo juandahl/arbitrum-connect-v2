@@ -13,7 +13,7 @@ import "@rainbow-me/rainbowkit/styles.css";
 import { ethers } from "ethers";
 import { Address } from "viem";
 import { useAccount, useSwitchChain } from "wagmi";
-import { useEthersSigner } from "./useEthersSigner";
+import { useEthersSigner } from "./use-ethers-signer";
 
 export enum ClaimStatus {
   PENDING = "PENDING",
