@@ -13,7 +13,7 @@ import { Address } from "viem";
 import { AddToCalendarButton } from "../add-to-calendar";
 import { GoogleCalendarIcon } from "../icons";
 import { StatusStep } from "./status-step";
-import { LEARN_MORE_URI } from "@/constants";
+import { arbitrumScan, l1Scan, LEARN_MORE_URI } from "@/constants";
 
 export function TransactionStatus(props: {
     tx: Transaction;
@@ -68,7 +68,7 @@ export function TransactionStatus(props: {
         queryFn: () => getClaimStatus(childProvider, l2ToL1Msg!),
         enabled: !!l2ToL1Msg,
     });
-
+    
     const { data: canForceInclude, isFetching: fetchingForceIncludeStatus } =
         useQuery({
             queryKey: ["forceIncludeStatus", transaction.delayedInboxHash],
@@ -177,6 +177,8 @@ export function TransactionStatus(props: {
         if (!triggered && isVisible) setTriggered(true);
     }, [isVisible]);
 
+    const txUrl = `${arbitrumScan}/tx/${transaction.bridgeHash}`
+    const hashUrl = `${l1Scan}/tx/${transaction.delayedInboxHash}`
     return (
         <div className="flex flex-col text-start justify-between bg-gray-100 border border-neutral-200 rounded-2xl pt-4  overflow-hidden">
             <div ref={ref} className="flex flex-col grow justify-between text-primary-700 px-4 md:px-6">
@@ -188,7 +190,7 @@ export function TransactionStatus(props: {
                     className="pt-2 md:flex md:space-x-4 mb-4"
                 >
                     <a
-                        href={`https://sepolia.arbiscan.io/tx/${transaction.bridgeHash}`}
+                        href={txUrl}
                         target="_blank"
                         className="link text-sm flex space-x-1 items-center"
                     >
@@ -226,7 +228,7 @@ export function TransactionStatus(props: {
                         )}
                     {transaction.delayedInboxHash && (
                         <a
-                            href={`https://sepolia.etherscan.io/tx/${transaction.delayedInboxHash}`}
+                            href={hashUrl}
                             target="_blank"
                             className="link text-sm flex space-x-1 items-center "
                         >
