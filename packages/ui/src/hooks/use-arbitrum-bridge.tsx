@@ -49,7 +49,7 @@ export default function useArbitrumBridge() {
   async function isForceIncludePossible(parentSigner: ethers.providers.JsonRpcSigner) {
     await ensureChainId(parentChainId);
     const inboxSdk = new InboxTools(parentSigner, l2Network);
-    const canForceInclude = await inboxSdk.getForceIncludableEvent(10 * 6545, 1 , 1);
+    const canForceInclude = await inboxSdk.getForceIncludableEvent();
     return !!(canForceInclude);
   }
 
