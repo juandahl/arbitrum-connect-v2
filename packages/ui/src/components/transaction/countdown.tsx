@@ -10,11 +10,15 @@ function calculateTimeRemaining(timestamp: number, daysToAdd: number): string | 
  const now = Date.now();
 
  if (now >= endDate.getTime()) {
-     return null;
+     return null; // Indica que el tiempo ha expirado
  }
 
  const duration = intervalToDuration({ start: now, end: endDate });
- return formatDuration(duration, { delimiter: ", " });
+
+ return formatDuration(
+  { days: duration.days, hours: duration.hours }, // Incluye solo días y horas
+  { delimiter: ", " } // Separador personalizado
+);
 }
 
 export function Countdown({ startTimestamp, daysToAdd }: CountdownProps) {
