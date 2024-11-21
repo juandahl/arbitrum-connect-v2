@@ -14,6 +14,9 @@ import { AddToCalendarButton } from "../add-to-calendar";
 import { GoogleCalendarIcon } from "../icons";
 import { StatusStep } from "./status-step";
 import { arbitrumScan, l1Scan, LEARN_MORE_URI } from "@/constants";
+import { Countdown } from "./countdown";
+
+//TODO: refactor this code : make it more readable and clean
 
 export function TransactionStatus(props: {
     tx: Transaction;
@@ -34,27 +37,30 @@ export function TransactionStatus(props: {
     const isVisible = useOnScreen(ref);
     const { publicParentClient, childProvider } = useWeb3ClientContext();
     const [triggered, setTriggered] = useState(false);
-    const remainingHours = transaction.delayedInboxTimestamp ? calculateRemainingHours(transaction.delayedInboxTimestamp) : undefined
+    const remainingHours = transaction.delayedInboxTimestamp
+        ? calculateRemainingHours(transaction.delayedInboxTimestamp)
+        : undefined;
     const { setError } = useAlertContext();
 
     const forceIncludeTx = useMutation({
         mutationFn: forceInclude,
-        onError: setError
+        onError: setError,
     });
 
     const confirmTx = useMutation({
         mutationFn: pushChildTxToParent,
-        onError: setError
+        onError: setError,
     });
 
     const claimFundsTx = useMutation({
         mutationFn: claimFunds,
-        onError: setError
+        onError: setError,
     });
 
     const { data: l2ToL1Msg, isFetching: fetchingL2ToL1Msg } = useQuery({
         queryKey: ["l2ToL1Msg", transaction.bridgeHash],
-        queryFn: () => getL2toL1Msg(transaction.bridgeHash, childProvider, signer!),
+        queryFn: () =>
+            getL2toL1Msg(transaction.bridgeHash, childProvider, signer!),
         enabled:
             triggered &&
             !!signer &&
@@ -63,12 +69,14 @@ export function TransactionStatus(props: {
         staleTime: Infinity,
     });
 
-    const { data: claimStatusData, isFetching: fetchingClaimStatus } = useQuery({
-        queryKey: ["claimStatus", transaction.bridgeHash],
-        queryFn: () => getClaimStatus(childProvider, l2ToL1Msg!),
-        enabled: !!l2ToL1Msg,
-    });
-    
+    const { data: claimStatusData, isFetching: fetchingClaimStatus } = useQuery(
+        {
+            queryKey: ["claimStatus", transaction.bridgeHash],
+            queryFn: () => getClaimStatus(childProvider, l2ToL1Msg!),
+            enabled: !!l2ToL1Msg,
+        }
+    );
+
     const { data: canForceInclude, isFetching: fetchingForceIncludeStatus } =
         useQuery({
             queryKey: ["forceIncludeStatus", transaction.delayedInboxHash],
@@ -86,7 +94,10 @@ export function TransactionStatus(props: {
     } = useQuery({
         queryKey: ["delayedInboxTimestamp", transaction.delayedInboxHash],
         queryFn: () =>
-            getTimestampFromTxHash(transaction.delayedInboxHash!, publicParentClient),
+            getTimestampFromTxHash(
+                transaction.delayedInboxHash!,
+                publicParentClient
+            ),
         enabled:
             triggered &&
             transaction.delayedInboxHash !== undefined &&
@@ -100,7 +111,7 @@ export function TransactionStatus(props: {
             end: dueDate,
         }).hours;
 
-        return (!remainingHours || remainingHours < 0) ? 0 : remainingHours;
+        return !remainingHours || remainingHours < 0 ? 0 : remainingHours;
     }
 
     function updateTx(updatedTx: Transaction) {
@@ -177,11 +188,23 @@ export function TransactionStatus(props: {
         if (!triggered && isVisible) setTriggered(true);
     }, [isVisible]);
 
-    const txUrl = `${arbitrumScan}/tx/${transaction.bridgeHash}`
-    const hashUrl = `${l1Scan}/tx/${transaction.delayedInboxHash}`
+    const txUrl = `${arbitrumScan}/tx/${transaction.bridgeHash}`;
+    const hashUrl = `${l1Scan}/tx/${transaction.delayedInboxHash}`;
+    const claimStepActive =
+        transaction.claimStatus === ClaimStatus.CLAIMABLE ||
+        (transaction.claimStatus === ClaimStatus.PENDING &&
+            fetchingClaimStatus) ||
+        fetchingL2ToL1Msg;
+    const canClaim = transaction.claimStatus === ClaimStatus.CLAIMABLE &&
+    !fetchingClaimStatus &&
+    !fetchingL2ToL1Msg
+    const claimTimeRemainingActive = claimStepActive && !canClaim && !fetchingClaimStatus;
     return (
         <div className="flex flex-col text-start justify-between bg-gray-100 border border-neutral-200 rounded-2xl pt-4  overflow-hidden">
-            <div ref={ref} className="flex flex-col grow justify-between text-primary-700 px-4 md:px-6">
+            <div
+                ref={ref}
+                className="flex flex-col grow justify-between text-primary-700 px-4 md:px-6"
+            >
                 <StatusStep
                     done
                     number={1}
@@ -201,12 +224,14 @@ export function TransactionStatus(props: {
                 <StatusStep
                     done={!!transaction.delayedInboxTimestamp}
                     active={
-                        !transaction.delayedInboxHash || !transaction.delayedInboxTimestamp
+                        !transaction.delayedInboxHash ||
+                        !transaction.delayedInboxTimestamp
                     }
                     running={
                         confirmTx.isPending ||
                         fetchingInboxTxTimestamp ||
-                        (transaction.delayedInboxHash && !transaction.delayedInboxTimestamp)
+                        (transaction.delayedInboxHash &&
+                            !transaction.delayedInboxTimestamp)
                     }
                     number={2}
                     title="Confirm Withdraw"
@@ -239,9 +264,10 @@ export function TransactionStatus(props: {
                 </StatusStep>
                 <StatusStep
                     done={
-                        [ClaimStatus.CLAIMED, ClaimStatus.CLAIMABLE].includes(
+                        ([ClaimStatus.CLAIMED, ClaimStatus.CLAIMABLE].includes(
                             transaction.claimStatus
-                        ) &&
+                        ) ||
+                            (remainingHours == 0 && !canForceInclude)) &&
                         (!fetchingClaimStatus || !fetchingL2ToL1Msg)
                     }
                     active={
@@ -250,14 +276,19 @@ export function TransactionStatus(props: {
                         !fetchingClaimStatus &&
                         !fetchingL2ToL1Msg
                     }
-                    running={forceIncludeTx.isPending || fetchingForceIncludeStatus}
+                    running={
+                        forceIncludeTx.isPending || fetchingForceIncludeStatus
+                    }
                     number={3}
                     title="Force transaction"
                     description="If after 24 hours your Arbitrum transaction hasn't been mined, you can push it forward manually with some extra fee in ethereum"
                     className="flex flex-col items-start pt-2 space-y-2 md:space-y-0 md:space-x-2 mb-4 md:flex-row md:items-center"
                 >
                     {canForceInclude && (
-                        <button onClick={onForce} className="btn btn-primary btn-sm">
+                        <button
+                            onClick={onForce}
+                            className="btn btn-primary btn-sm"
+                        >
                             Force include
                         </button>
                     )}
@@ -275,8 +306,14 @@ export function TransactionStatus(props: {
                                         title: "Push forward your transaction",
                                         description:
                                             "Wait is over, if your transaction hasn't go through by now, you can force include it from Arbitrum connect.",
-                                        startDate: addHours(transaction.delayedInboxTimestamp, 24),
-                                        endDate: addHours(transaction.delayedInboxTimestamp, 25),
+                                        startDate: addHours(
+                                            transaction.delayedInboxTimestamp,
+                                            24
+                                        ),
+                                        endDate: addHours(
+                                            transaction.delayedInboxTimestamp,
+                                            25
+                                        ),
                                     }}
                                 >
                                     <GoogleCalendarIcon className="h-4 w-4" />
@@ -288,14 +325,11 @@ export function TransactionStatus(props: {
 
                 <StatusStep
                     done={transaction.claimStatus === ClaimStatus.CLAIMED}
-                    active={
-                        transaction.claimStatus === ClaimStatus.CLAIMABLE ||
-                        (transaction.claimStatus === ClaimStatus.PENDING &&
-                            fetchingClaimStatus) ||
-                        fetchingL2ToL1Msg
-                    }
+                    active={claimStepActive}
                     running={
-                        claimFundsTx.isPending || fetchingClaimStatus || fetchingL2ToL1Msg
+                        claimFundsTx.isPending ||
+                        fetchingClaimStatus ||
+                        fetchingL2ToL1Msg
                     }
                     number={4}
                     className="flex flex-col items-start pt-2 space-y-2 md:space-y-0 md:space-x-2 mb-4 md:flex-row md:items-center"
@@ -303,9 +337,8 @@ export function TransactionStatus(props: {
                     description="After your transaction has been validated, you can follow the state of it and claim your funds in the arbitrum bridge page by just connecting your wallet."
                     lastStep
                 >
-                    {transaction.claimStatus === ClaimStatus.CLAIMABLE &&
-                        !fetchingClaimStatus &&
-                        !fetchingL2ToL1Msg && (
+                    {claimTimeRemainingActive && <Countdown startTimestamp={transaction.delayedInboxTimestamp} daysToAdd={7} />}
+                    {canClaim && (
                             <button
                                 onClick={onClaim}
                                 className={cn("btn btn-primary btn-sm", {
@@ -320,7 +353,10 @@ export function TransactionStatus(props: {
             </div>
             <div className="bg-gray-200 mt-4 px-4 py-3 text-center">
                 <div className="text-sm">
-                    Have questions about this process? <a className="link" href={LEARN_MORE_URI} target="_blank">Learn More</a>
+                    Have questions about this process?{" "}
+                    <a className="link" href={LEARN_MORE_URI} target="_blank">
+                        Learn More
+                    </a>
                 </div>
             </div>
         </div>
