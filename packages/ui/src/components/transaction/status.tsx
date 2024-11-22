@@ -188,8 +188,8 @@ export function TransactionStatus(props: {
         if (!triggered && isVisible) setTriggered(true);
     }, [isVisible]);
 
-    const txUrl = `${arbitrumScan}/tx/${transaction.bridgeHash}`;
-    const hashUrl = `${l1Scan}/tx/${transaction.delayedInboxHash}`;
+    const l2TxUrl = `${arbitrumScan}/tx/${transaction.bridgeHash}`;
+    const l1TxUrl = `${l1Scan}/tx/${transaction.delayedInboxHash}`;
     const claimStepActive =
         transaction.claimStatus === ClaimStatus.CLAIMABLE ||
         (transaction.claimStatus === ClaimStatus.PENDING &&
@@ -213,7 +213,7 @@ export function TransactionStatus(props: {
                     className="pt-2 md:flex md:space-x-4 mb-4"
                 >
                     <a
-                        href={txUrl}
+                        href={l2TxUrl}
                         target="_blank"
                         className="link text-sm flex space-x-1 items-center"
                     >
@@ -253,7 +253,7 @@ export function TransactionStatus(props: {
                         )}
                     {transaction.delayedInboxHash && (
                         <a
-                            href={hashUrl}
+                            href={l1TxUrl}
                             target="_blank"
                             className="link text-sm flex space-x-1 items-center "
                         >
