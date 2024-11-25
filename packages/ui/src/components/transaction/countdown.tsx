@@ -3,6 +3,7 @@ import {
     addDays,
     formatDuration,
     addHours,
+    isAfter,
 } from "date-fns";
 import { AddToCalendarButton } from "../add-to-calendar";
 
@@ -17,16 +18,17 @@ function calculateTimeRemaining(
 ): string | null {
     const endDate = addDays(timestamp, daysToAdd);
     const now = Date.now();
-
-    if (now >= endDate.getTime()) {
-        return null; // Indica que el tiempo ha expirado
+    const hasExpired = isAfter(now, endDate);
+    
+    if (hasExpired) {
+        return null; 
     }
 
     const duration = intervalToDuration({ start: now, end: endDate });
 
     return formatDuration(
-        { days: duration.days, hours: duration.hours }, // Incluye solo días y horas
-        { delimiter: ", " } // Separador personalizado
+        { days: duration.days, hours: duration.hours }, 
+        { delimiter: ", " } 
     );
 }
 
