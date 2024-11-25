@@ -45,9 +45,9 @@ export function Countdown({ startTimestamp, daysToAdd }: CountdownProps) {
 
             <AddToCalendarButton
                 event={{
-                    title: "Push forward your transaction",
+                    title: "Claim your transaction",
                     description:
-                        "Wait is over, if your transaction hasn't go through by now, you can force include it from Arbitrum connect.",
+                        "Wait is over, you can now claim your transaction",
                     startDate: addHours(startTimestamp, daysToAdd * 24),
                     endDate: addHours(startTimestamp, (daysToAdd * 24) + 1),
                 }}
