@@ -11,7 +11,6 @@ import { ArrowUpRight } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Address } from "viem";
 import { AddToCalendarButton } from "../add-to-calendar";
-import { GoogleCalendarIcon } from "../icons";
 import { StatusStep } from "./status-step";
 import { arbitrumScan, l1Scan, LEARN_MORE_URI } from "@/constants";
 import { Countdown } from "./countdown";
@@ -73,7 +72,8 @@ export function TransactionStatus(props: {
         {
             queryKey: ["claimStatus", transaction.bridgeHash],
             queryFn: () => getClaimStatus(childProvider, l2ToL1Msg!),
-            enabled: !!l2ToL1Msg,
+            enabled: !!l2ToL1Msg && !!childProvider && !!transaction.bridgeHash,
+            staleTime: 60000, // 1 minuto
         }
     );
 
@@ -191,14 +191,22 @@ export function TransactionStatus(props: {
     const l2TxUrl = `${arbitrumScan}/tx/${transaction.bridgeHash}`;
     const l1TxUrl = `${l1Scan}/tx/${transaction.delayedInboxHash}`;
     const claimStepActive =
-        transaction.claimStatus === ClaimStatus.CLAIMABLE ||
-        (transaction.claimStatus === ClaimStatus.PENDING &&
-            fetchingClaimStatus) ||
-        fetchingL2ToL1Msg;
+        transaction.claimStatus !== ClaimStatus.CLAIMED;
+        
     const canClaim = transaction.claimStatus === ClaimStatus.CLAIMABLE &&
     !fetchingClaimStatus &&
     !fetchingL2ToL1Msg
-    const claimTimeRemainingActive = claimStepActive && !canClaim && !fetchingClaimStatus;
+    const claimTimeRemainingActive = transaction.claimStatus === ClaimStatus.PENDING && !canClaim && !fetchingClaimStatus;
+    const forceStepDone = ([ClaimStatus.CLAIMED, ClaimStatus.CLAIMABLE].includes(
+        transaction.claimStatus
+    ) ||
+        (remainingHours == 0 && !canForceInclude)) &&
+    (!fetchingClaimStatus || !fetchingL2ToL1Msg)
+    const forceStepActive = !forceStepDone && !!transaction.delayedInboxTimestamp &&
+    transaction.claimStatus === ClaimStatus.PENDING &&
+    !fetchingClaimStatus &&
+    !fetchingL2ToL1Msg
+    
     return (
         <div className="flex flex-col text-start justify-between bg-gray-100 border border-neutral-200 rounded-2xl pt-4  overflow-hidden">
             <div
@@ -264,17 +272,10 @@ export function TransactionStatus(props: {
                 </StatusStep>
                 <StatusStep
                     done={
-                        ([ClaimStatus.CLAIMED, ClaimStatus.CLAIMABLE].includes(
-                            transaction.claimStatus
-                        ) ||
-                            (remainingHours == 0 && !canForceInclude)) &&
-                        (!fetchingClaimStatus || !fetchingL2ToL1Msg)
+                        forceStepDone
                     }
                     active={
-                        !!transaction.delayedInboxTimestamp &&
-                        transaction.claimStatus === ClaimStatus.PENDING &&
-                        !fetchingClaimStatus &&
-                        !fetchingL2ToL1Msg
+                        forceStepActive
                     }
                     running={
                         forceIncludeTx.isPending || fetchingForceIncludeStatus
@@ -295,13 +296,12 @@ export function TransactionStatus(props: {
                     {!canForceInclude &&
                         transaction.claimStatus === ClaimStatus.PENDING &&
                         transaction.delayedInboxTimestamp &&
-                        remainingHours !== undefined && (
+                        remainingHours! > 0 && (
                             <>
                                 <a className="text-sm font-semibold">
                                     ~ {remainingHours} hours remaining
                                 </a>
                                 <AddToCalendarButton
-                                    className="btn btn-sm space-x-1"
                                     event={{
                                         title: "Push forward your transaction",
                                         description:
@@ -315,10 +315,7 @@ export function TransactionStatus(props: {
                                             25
                                         ),
                                     }}
-                                >
-                                    <GoogleCalendarIcon className="h-4 w-4" />
-                                    <span>Create reminder</span>
-                                </AddToCalendarButton>
+                                />
                             </>
                         )}
                 </StatusStep>
@@ -334,7 +331,7 @@ export function TransactionStatus(props: {
                     number={4}
                     className="flex flex-col items-start pt-2 space-y-2 md:space-y-0 md:space-x-2 mb-4 md:flex-row md:items-center"
                     title="Claim funds on Ethereum"
-                    description="After your transaction has been validated, you can follow the state of it and claim your funds in the arbitrum bridge page by just connecting your wallet."
+                    description="After your transaction has been validated, you can track its status. Once the 7-day canonical bridge period on Arbitrum has elapsed, you will be able to claim your funds here."
                     lastStep
                 >
                     {claimTimeRemainingActive && <Countdown startTimestamp={transaction.delayedInboxTimestamp} daysToAdd={7} />}
