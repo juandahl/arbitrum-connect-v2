@@ -73,7 +73,7 @@ export function TransactionStatus(props: {
             queryKey: ["claimStatus", transaction.bridgeHash],
             queryFn: () => getClaimStatus(childProvider, l2ToL1Msg!),
             enabled: !!l2ToL1Msg && !!childProvider && !!transaction.bridgeHash,
-            staleTime: 60000, // 1 minuto
+            staleTime: 60000,
         }
     );
 
