@@ -74,6 +74,7 @@ export function TransactionStatus(props: {
             queryFn: () => getClaimStatus(childProvider, l2ToL1Msg!),
             enabled: !!l2ToL1Msg && !!childProvider && !!transaction.bridgeHash,
             staleTime: 60000,
+            refetchOnMount: false,
         }
     );
 
@@ -190,23 +191,25 @@ export function TransactionStatus(props: {
 
     const l2TxUrl = `${arbitrumScan}/tx/${transaction.bridgeHash}`;
     const l1TxUrl = `${l1Scan}/tx/${transaction.delayedInboxHash}`;
-    const claimStepActive =
-        transaction.claimStatus !== ClaimStatus.CLAIMED;
-        
+    
+    const confirmWithdraw = !transaction.delayedInboxHash ||
+    !transaction.delayedInboxTimestamp
     const canClaim = transaction.claimStatus === ClaimStatus.CLAIMABLE &&
     !fetchingClaimStatus &&
     !fetchingL2ToL1Msg
-    const claimTimeRemainingActive = transaction.claimStatus === ClaimStatus.PENDING && !canClaim && !fetchingClaimStatus;
+    const claimTimeRemainingActive = transaction.claimStatus === ClaimStatus.PENDING && !canClaim && !fetchingClaimStatus && !fetchingL2ToL1Msg;
+
+    const forceStepRunning = forceIncludeTx.isPending || fetchingForceIncludeStatus || fetchingClaimStatus
     const forceStepDone = ([ClaimStatus.CLAIMED, ClaimStatus.CLAIMABLE].includes(
         transaction.claimStatus
     ) ||
         (remainingHours == 0 && !canForceInclude)) &&
     (!fetchingClaimStatus || !fetchingL2ToL1Msg)
     const forceStepActive = !forceStepDone && !!transaction.delayedInboxTimestamp &&
-    transaction.claimStatus === ClaimStatus.PENDING &&
-    !fetchingClaimStatus &&
-    !fetchingL2ToL1Msg
+    transaction.claimStatus === ClaimStatus.PENDING
     
+    const claimStepActive =
+        transaction.claimStatus !== ClaimStatus.CLAIMED && !forceStepActive && !confirmWithdraw;
     return (
         <div className="flex flex-col text-start justify-between bg-gray-100 border border-neutral-200 rounded-2xl pt-4  overflow-hidden">
             <div
@@ -232,8 +235,7 @@ export function TransactionStatus(props: {
                 <StatusStep
                     done={!!transaction.delayedInboxTimestamp}
                     active={
-                        !transaction.delayedInboxHash ||
-                        !transaction.delayedInboxTimestamp
+                        confirmWithdraw
                     }
                     running={
                         confirmTx.isPending ||
@@ -278,7 +280,7 @@ export function TransactionStatus(props: {
                         forceStepActive
                     }
                     running={
-                        forceIncludeTx.isPending || fetchingForceIncludeStatus
+                        forceStepRunning
                     }
                     number={3}
                     title="Force transaction"
@@ -293,7 +295,7 @@ export function TransactionStatus(props: {
                             Force include
                         </button>
                     )}
-                    {!canForceInclude &&
+                    {!forceStepRunning && !canForceInclude &&
                         transaction.claimStatus === ClaimStatus.PENDING &&
                         transaction.delayedInboxTimestamp &&
                         remainingHours! > 0 && (
